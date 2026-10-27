@@ -1,3 +1,4 @@
+import { t } from './i18n';
 import { createContext, useContext } from 'react';
 import type { AnchorHTMLAttributes } from 'react';
 
@@ -8,7 +9,7 @@ export function setUnsaved(value: boolean) {
   const app = window.Telegram?.WebApp;
   if(app?.initData) { if(value)app.enableClosingConfirmation?.();else app.disableClosingConfirmation?.(); }
 }
-export function canNavigate() { return !unsaved || window.confirm('Есть несохранённые изменения. Покинуть редактор?'); }
+export function canNavigate() { return !unsaved || window.confirm(t("Есть несохранённые изменения. Покинуть редактор?")); }
 export function useNavigate() { return useContext(NavigationContext); }
 export function Link({ href = '#', onClick, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   const navigate = useNavigate();

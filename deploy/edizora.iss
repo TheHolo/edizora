@@ -18,7 +18,7 @@ AppSupportURL=https://github.com/TheHolo/edizora/issues
 AppUpdatesURL=https://github.com/TheHolo/edizora/releases
 VersionInfoVersion=0.1.0.0
 VersionInfoProductName=Edizora
-VersionInfoDescription=Edizora 0.1 — установка приложения
+VersionInfoDescription=Edizora 0.1 — application installer
 DefaultDirName={localappdata}\Programs\Edizora
 DefaultGroupName=Edizora
 DisableProgramGroupPage=yes
@@ -38,25 +38,40 @@ AppMutex=Local\Edizora.Application
 UninstallDisplayIcon={app}\edizora.exe
 DisableWelcomePage=no
 SetupLogging=yes
+LanguageDetectionMethod=none
 #ifdef AcceptanceInstall
 ; Isolated acceptance installs keep all files in a disposable test directory.
 CreateUninstallRegKey=no
 #endif
 
 [Languages]
-Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
+
+[CustomMessages]
+english.DesktopShortcut=Create a desktop shortcut
+russian.DesktopShortcut=Создать ярлык на рабочем столе
+english.Autostart=Start Edizora when signing in to Windows
+russian.Autostart=Запускать Edizora при входе в Windows
+english.StopApp=Stop Edizora
+russian.StopApp=Остановить Edizora
+english.OpenApp=Open Edizora and set up the application
+russian.OpenApp=Открыть Edizora и настроить приложение
+english.BackupFailed=Could not create a backup before updating. Start Edizora and check diagnostics.
+russian.BackupFailed=Не удалось создать резервную копию перед обновлением. Запустите Edizora и проверьте диагностику.
+english.LegacyBackupFailed=Could not create a backup before updating. Start the previous version and check diagnostics.
+russian.LegacyBackupFailed=Не удалось создать резервную копию перед обновлением. Запустите прежнюю версию и проверьте диагностику.
 
 [Tasks]
-Name: "desktopicon"; Description: "Создать ярлык на рабочем столе"; Flags: unchecked
-Name: "autostart"; Description: "Запускать Edizora при входе в Windows"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:DesktopShortcut}"; Flags: unchecked
+Name: "autostart"; Description: "{cm:Autostart}"; Flags: unchecked
 
 [Files]
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\Edizora"; Filename: "{app}\edizora.exe"
-Name: "{group}\Остановить Edizora"; Filename: "{app}\edizora.exe"; Parameters: "--stop"
+Name: "{group}\{cm:StopApp}"; Filename: "{app}\edizora.exe"; Parameters: "--stop"
 Name: "{autodesktop}\Edizora"; Filename: "{app}\edizora.exe"; Tasks: desktopicon
 
 [Registry]
@@ -69,7 +84,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 Type: files; Name: "{app}\Publisher.exe"
 
 [Run]
-Filename: "{app}\edizora.exe"; Description: "Открыть Edizora и настроить приложение"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\edizora.exe"; Description: "{cm:OpenApp}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 ; User data lives outside {app} and is intentionally preserved.
@@ -83,10 +98,10 @@ begin
   if FileExists(ExpandConstant('{app}\edizora.exe')) then begin
     if not Exec(ExpandConstant('{app}\edizora.exe'), '--prepare-update', '', SW_HIDE,
       ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
-      Result := 'Не удалось создать резервную копию перед обновлением. Запустите Edizora и проверьте диагностику.';
+      Result := CustomMessage('BackupFailed');
   end else if FileExists(ExpandConstant('{app}\Publisher.exe')) then begin
     if not Exec(ExpandConstant('{app}\Publisher.exe'), '--prepare-update', '', SW_HIDE,
       ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
-      Result := 'Не удалось создать резервную копию перед обновлением. Запустите прежнюю версию и проверьте диагностику.';
+      Result := CustomMessage('LegacyBackupFailed');
   end;
 end;

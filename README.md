@@ -2,6 +2,8 @@
 
 Приложение для подготовки и публикации изображений и новостей в Telegram.
 
+Интерфейс по умолчанию на английском. Русский можно выбрать в **Settings → General → Interface language → Русский → Apply language**. Выбор сохраняется в этом браузере; применение языка перезагружает страницу. Язык интерфейса не меняет тексты публикаций, настройки AI или часовой пояс.
+
 **[Скачать Edizora 0.1 для Windows](https://github.com/TheHolo/edizora/releases/download/v0.1/edizora.exe)** · [Все релизы](https://github.com/TheHolo/edizora/releases) · [Что нового](CHANGELOG.md)
 
 **Приложение для Windows:** [установка без терминала и первый запуск](docs/desktop-quickstart.md). Готовый установщик включает Python и веб-интерфейс; поддерживает LM Studio, Ollama и локальные/облачные сервисы с совместимым API. [Сборка и границы предварительного выпуска](docs/desktop-development.md).

@@ -1,3 +1,4 @@
+import { locale, t } from './i18n';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AlertCircle, Check, CheckCircle2, ChevronRight, Clock3, FileImage, FileText, Loader2, RefreshCw, ShieldAlert, WifiOff } from 'lucide-react';
@@ -6,25 +7,25 @@ import { Link } from './navigation';
 import type { Operation, Publication } from './types';
 
 export const statusLabels: Record<string, string> = {
-  ready: 'Готово', ok: 'В норме', unchecked: 'Не проверено', leased: 'Выполняется', finalizing: 'Сохраняем результат', created: 'Получен', resolving: 'Получаем источник', waiting_confirmation: 'Черновик', queued: 'В очереди', scheduled: 'Точное время',
-  downloading: 'Загружаем', processing: 'Подготовка', publishing: 'Отправляется', completed: 'Опубликовано', failed: 'Ошибка', cancelled: 'Отменено',
-  running: 'В работе', succeeded: 'Готово', waiting_external: 'Ожидаем ответ', waiting_worker: 'Ждём домашний компьютер', waiting_user: 'Нужно ваше действие',
-  cancelling: 'Останавливаем', active: 'Активен', standby: 'Ожидает активации', retired: 'Передал управление', recovery_required: 'Нужно восстановление',
-  online: 'На связи', offline: 'Не на связи', revoked: 'Доступ отозван', pending: 'Ожидает', uncertain_publish: 'Результат неизвестен',
+  ready: t("Готово"), ok: t("В норме"), unchecked: t("Не проверено"), leased: t("Выполняется"), finalizing: t("Сохраняем результат"), created: t("Получен"), resolving: t("Получаем источник"), waiting_confirmation: t("Черновик"), queued: t("В очереди"), scheduled: t("Точное время"),
+  downloading: t("Загружаем"), processing: t("Подготовка"), publishing: t("Отправляется"), completed: t("Опубликовано"), failed: t("Ошибка"), cancelled: t("Отменено"),
+  running: t("В работе"), succeeded: t("Готово"), waiting_external: t("Ожидаем ответ"), waiting_worker: t("Ждём домашний компьютер"), waiting_user: t("Нужно ваше действие"),
+  cancelling: t("Останавливаем"), active: t("Активен"), standby: t("Ожидает активации"), retired: t("Передал управление"), recovery_required: t("Нужно восстановление"),
+  online: t("На связи"), offline: t("Не на связи"), revoked: t("Доступ отозван"), pending: t("Ожидает"), uncertain_publish: t("Результат неизвестен"),
 };
 export const stageLabels: Record<string, string> = {
-  accepted: 'Задание принято', source: 'Получение источника', fetching: 'Получение источника', extracting: 'Извлечение текста', media: 'Подготовка медиа',
-  ai: 'Ответ модели', model: 'Ответ модели', drafting: 'Создание черновика', ready: 'Проверка черновика', prepare: 'Подготовка',
-  planned: 'План подготовлен', stopping: 'Остановка публикаций', quiesced: 'Проверка остановки', preparing_target: 'Подготовка назначения',
-  snapshotting: 'Согласованный снимок', transferring: 'Передача данных', verifying: 'Проверка целостности', retiring_source: 'Передача управления',
-  activation_committed: 'Право передано', activating_target: 'Активация назначения', routing: 'Проверка адреса', completed: 'Завершение',
+  accepted: t("Задание принято"), source: t("Получение источника"), fetching: t("Получение источника"), extracting: t("Извлечение текста"), media: t("Подготовка медиа"),
+  ai: t("Ответ модели"), model: t("Ответ модели"), drafting: t("Создание черновика"), ready: t("Проверка черновика"), prepare: t("Подготовка"),
+  planned: t("План подготовлен"), stopping: t("Остановка публикаций"), quiesced: t("Проверка остановки"), preparing_target: t("Подготовка назначения"),
+  snapshotting: t("Согласованный снимок"), transferring: t("Передача данных"), verifying: t("Проверка целостности"), retiring_source: t("Передача управления"),
+  activation_committed: t("Право передано"), activating_target: t("Активация назначения"), routing: t("Проверка адреса"), completed: t("Завершение"),
 };
 export function date(value?: string | number | null, timezone = 'Asia/Vladivostok', short = false) {
   if (!value) return '—';
   const parsed = new Date(typeof value === 'number' ? value * 1000 : value); if (Number.isNaN(parsed.valueOf())) return '—';
-  return new Intl.DateTimeFormat('ru-RU', { timeZone: timezone, day: 'numeric', month: short ? 'short' : 'long', hour: '2-digit', minute: '2-digit' }).format(parsed);
+  return new Intl.DateTimeFormat(locale(), { timeZone: timezone, day: 'numeric', month: short ? 'short' : 'long', hour: '2-digit', minute: '2-digit' }).format(parsed);
 }
-export function bytes(value?: number) { if (value === undefined) return '—'; const unit = value >= 1073741824 ? 1073741824 : value >= 1048576 ? 1048576 : value >= 1024 ? 1024 : 1; return `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(value / unit)} ${unit === 1 ? 'Б' : unit === 1024 ? 'КБ' : unit === 1048576 ? 'МБ' : 'ГБ'}`; }
+export function bytes(value?: number) { if (value === undefined) return '—'; const unit = value >= 1073741824 ? 1073741824 : value >= 1048576 ? 1048576 : value >= 1024 ? 1024 : 1; return `${new Intl.NumberFormat(locale(), { maximumFractionDigits: 1 }).format(value / unit)} ${unit === 1 ? t("Б") : unit === 1024 ? t("КБ") : unit === 1048576 ? t("МБ") : t("ГБ")}`; }
 export function Status({ value, uncertain = false }: { value: string; uncertain?: boolean }) {
   const current = uncertain ? 'uncertain_publish' : value;
   const success = ['completed', 'succeeded', 'active', 'online'].includes(current);
@@ -37,12 +38,12 @@ export function ErrorBlock({ error, retry }: { error: unknown; retry?: () => voi
   if (!error) return null;
   const data = error instanceof ApiError ? error.data : undefined;
   const Icon = error instanceof ApiError && error.status === 0 ? WifiOff : error instanceof ApiError && error.status === 403 ? ShieldAlert : AlertCircle;
-  return <div className="notice error" role="alert"><Icon size={20} /><div><strong>{data?.code === 'version_conflict' ? 'Содержимое изменилось в другом окне' : 'Не удалось завершить действие'}</strong><p>{error instanceof Error ? error.message : String(error)}</p>{data?.field_errors && <ul>{Object.entries(data.field_errors).map(([key,value]) => <li key={key}>{key}: {Array.isArray(value) ? value.join(', ') : value}</li>)}</ul>}{retry && <button className="text-button" onClick={retry}><RefreshCw size={14} />Повторить</button>}</div></div>;
+  return <div className="notice error" role="alert"><Icon size={20} /><div><strong>{data?.code === 'version_conflict' ? t("Содержимое изменилось в другом окне") : t("Не удалось завершить действие")}</strong><p>{error instanceof Error ? error.message : String(error)}</p>{data?.field_errors && <ul>{Object.entries(data.field_errors).map(([key,value]) => <li key={key}>{key}: {Array.isArray(value) ? value.join(', ') : value}</li>)}</ul>}{retry && <button className="text-button" onClick={retry}><RefreshCw size={14} />{t("Повторить")}</button>}</div></div>;
 }
 export function Empty({ title, description, action, icon = 'image' }: { title: string; description?: string; action?: ReactNode; icon?: 'image' | 'text' }) {
   return <div className="empty">{icon === 'image' ? <FileImage size={38} strokeWidth={1.2} /> : <FileText size={38} strokeWidth={1.2} />}<h3>{title}</h3>{description && <p>{description}</p>}{action}</div>;
 }
-export function Loading() { return <div className="loading" role="status"><Loader2 size={23} className="spin" /><span>Загружаем данные…</span></div>; }
+export function Loading() { return <div className="loading" role="status"><Loader2 size={23} className="spin" /><span>{t("Загружаем данные…")}</span></div>; }
 export function Heading({ title, subtitle, action, eyebrow }: { title: string; subtitle?: string; action?: ReactNode; eyebrow?: ReactNode }) {
   return <div className="page-heading"><div>{eyebrow && <div className="eyebrow">{eyebrow}</div>}<h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>{action && <div className="heading-actions">{action}</div>}</div>;
 }
@@ -65,10 +66,10 @@ export function Thumbnail({ src, title, className = '' }: { src?: string | null;
     if(reference.current)observer.observe(reference.current);
     return()=>{observer.disconnect();controller.abort();if(objectURL)URL.revokeObjectURL(objectURL);};
   },[src]);
-  return <span ref={reference} className={'thumbnail-holder '+className}>{resolved&&!failed?<img className="thumbnail" src={resolved} alt={title} loading="lazy" onError={()=>setFailed(true)}/>:<span className="thumbnail placeholder" role="img" aria-label="Изображение недоступно"><FileImage size={25} strokeWidth={1.3}/></span>}</span>;
+  return <span ref={reference} className={'thumbnail-holder '+className}>{resolved&&!failed?<img className="thumbnail" src={resolved} alt={title} loading="lazy" onError={()=>setFailed(true)}/>:<span className="thumbnail placeholder" role="img" aria-label={t("Изображение недоступно")}><FileImage size={25} strokeWidth={1.3}/></span>}</span>;
 }
 export function PublicationIdentity({ item }: { item: Publication }) {
-  return <div className="publication-identity"><div className="thumbnail-wrap"><Thumbnail src={item.album?.cover} title={item.title} /></div><div><Link href={`/publications/${item.id}`} className="title-link">{item.title || 'Без названия'}</Link><div className="muted small">{item.source?.provider || ({ text: 'Текст', news: 'Новость', artwork: 'Изображения' }[item.content_kind] || 'Материал')}{item.album?.total ? ` · ${item.album.selected} из ${item.album.total} кадров` : ''}</div></div></div>;
+  return <div className="publication-identity"><div className="thumbnail-wrap"><Thumbnail src={item.album?.cover} title={item.title} /></div><div><Link href={`/publications/${item.id}`} className="title-link">{item.title || t("Без названия")}</Link><div className="muted small">{item.source?.provider || ({ text: t("Текст"), news: t("Новость"), artwork: t("Изображения") }[item.content_kind] || t("Материал"))}{item.album?.total ? t(" · {0} из {1} кадров", [item.album.selected, item.album.total]) : ''}</div></div></div>;
 }
 export function Stepper({ operation }: { operation: Operation }) {
   const stages = operation.stages?.length ? operation.stages : [{ key: operation.stage_key, status: operation.status }];
@@ -76,12 +77,12 @@ export function Stepper({ operation }: { operation: Operation }) {
 }
 export function ProgressBar({ operation }: { operation: Operation }) {
   const p = operation.progress;
-  if (!p || !p.total || p.total <= 0) return <p className="muted small">{operation.message || 'Ожидаем следующий этап. Работа выполняется на сервере.'}</p>;
+  if (!p || !p.total || p.total <= 0) return <p className="muted small">{operation.message || t("Ожидаем следующий этап. Работа выполняется на сервере.")}</p>;
   const percent = Math.max(0, Math.min(100, p.completed / p.total * 100));
-  return <div className="measured-progress"><div className="between"><span>{p.unit === 'bytes' ? `${bytes(p.completed)} из ${bytes(p.total)}` : `${p.completed} из ${p.total} ${p.unit === 'files' ? 'файлов' : 'элементов'}`}</span><strong>{Math.round(percent)}%</strong></div><progress value={p.completed} max={p.total} aria-label="Прогресс текущего этапа" />{p.estimated_seconds_remaining != null && <span className="muted small">Прогноз: ещё около {Math.ceil(p.estimated_seconds_remaining / 60)} мин.</span>}</div>;
+  return <div className="measured-progress"><div className="between"><span>{p.unit === 'bytes' ? t("{0} из {1}", [bytes(p.completed), bytes(p.total)]) : t("{0} из {1} {2}", [p.completed, p.total, p.unit === 'files' ? t("файлов") : t("элементов")])}</span><strong>{Math.round(percent)}%</strong></div><progress value={p.completed} max={p.total} aria-label={t("Прогресс текущего этапа")} />{p.estimated_seconds_remaining != null && <span className="muted small">{t("Прогноз: ещё около ")}{Math.ceil(p.estimated_seconds_remaining / 60)} {t(" мин.")}</span>}</div>;
 }
 export function OperationCard({ operation, compact = false }: { operation: Operation; compact?: boolean }) {
-  return <Panel title={operation.message || stageLabels[operation.stage_key] || 'Текущая операция'}><Status value={operation.status} />{!compact && <Stepper operation={operation} />}<ProgressBar operation={operation} /><Link href={`/operations/${operation.id}`} className="button secondary full">Подробнее<ChevronRight size={16} /></Link></Panel>;
+  return <Panel title={operation.message || stageLabels[operation.stage_key] || t("Текущая операция")}><Status value={operation.status} />{!compact && <Stepper operation={operation} />}<ProgressBar operation={operation} /><Link href={`/operations/${operation.id}`} className="button secondary full">{t("Подробнее")}<ChevronRight size={16} /></Link></Panel>;
 }
 export function SafeRichText({ html }: { html: string }) {
   const root = new DOMParser().parseFromString(html, 'text/html').body;

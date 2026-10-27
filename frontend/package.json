@@ -10,7 +10,7 @@
     "check": "npm run check:api && tsc --noEmit",
     "gen:api": "openapi-typescript ../docs/openapi.json -o src/generated/api.ts",
     "check:api": "node scripts/check-api.mjs",
-    "test:client": "node --experimental-strip-types --test scripts/test-client.mjs"
+    "test:client": "node --experimental-strip-types --test scripts/test-client.mjs scripts/test-i18n.mjs"
   },
   "dependencies": {
     "lucide-react": "0.468.0",

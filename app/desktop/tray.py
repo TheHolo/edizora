@@ -26,10 +26,10 @@ def start_tray(root):
     def open_logs():
         os.startfile(root / 'logs')
 
-    icon = pystray.Icon('Edizora', image, f'Edizora {APP_VERSION} — работает на этом компьютере', pystray.Menu(
-        pystray.MenuItem('Открыть Edizora', lambda: launch(), default=True),
-        pystray.MenuItem('Открыть диагностику', open_logs),
+    icon = pystray.Icon('Edizora', image, f'Edizora {APP_VERSION} — running on this computer', pystray.Menu(
+        pystray.MenuItem('Open Edizora', lambda: launch(), default=True),
+        pystray.MenuItem('Open diagnostics', open_logs),
         pystray.Menu.SEPARATOR,
-        pystray.MenuItem('Остановить Edizora', lambda: launch('--stop'))))
+        pystray.MenuItem('Stop Edizora', lambda: launch('--stop'))))
     threading.Thread(target=icon.run, name='edizora-tray', daemon=True).start()
     return icon

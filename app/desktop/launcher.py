@@ -294,7 +294,7 @@ def run():
         main()
     except Exception:
         logging.exception("Не удалось запустить Edizora")
-        message = "Не удалось запустить Edizora. Журнал: " + str(root_path() / "logs/edizora.log")
+        message = "Could not start Edizora. Log: " + str(root_path() / "logs/edizora.log")
         if os.name == "nt":
             ctypes.windll.user32.MessageBoxW(None, message, "Edizora", 0x10)
         else:
