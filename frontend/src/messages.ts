@@ -43,7 +43,7 @@ export const english: Record<string, string> = {
   "Выйти": "Sign out",
   "Выйти · ": "Sign out · ",
   "Администратор": "Administrator",
-  "Публикации ограничены состоянием установки. ": "Publishing is restricted by the installation status. ",
+  "Публикации приостановлены. ": "Publishing is paused. ",
   "Открыть подробности": "View details",
   "Мобильная навигация": "Mobile navigation",
   "Задачи": "Tasks",
