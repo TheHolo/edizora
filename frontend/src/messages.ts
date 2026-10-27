@@ -1,5 +1,20 @@
 // Interface catalog. Russian source keys preserve the existing Russian wording.
 export const english: Record<string, string> = {
+  "Публикация уже удалена навсегда": "The publication has already been permanently deleted",
+  "Удалить «{0}» навсегда? Запись, история и неиспользуемые медиа будут удалены из приложения. Сообщения в Telegram останутся. Отменить удаление нельзя.": "Permanently delete “{0}”? The record, history and unused media will be removed from the app. Telegram messages will remain. This cannot be undone.",
+  "Удалить выбранные публикации ({0}) навсегда? Записи, история и неиспользуемые медиа будут удалены. Сообщения в Telegram останутся. Отменить удаление нельзя.": "Permanently delete the selected publications ({0})? Records, history and unused media will be removed. Telegram messages will remain. This cannot be undone.",
+  "Удалить навсегда": "Delete permanently",
+  "Удалить публикацию «{0}»": "Delete publication “{0}”",
+  "Запись удалена. Занятые файлы будут удалены автоматически после освобождения.": "The record was deleted. Busy files will be removed automatically when released.",
+  "Запись и неиспользуемые медиа удалены.": "The record and unused media were deleted.",
+  "Дождитесь завершения или отмены отправки перед удалением": "Wait until sending finishes or is cancelled before deleting",
+  "Дождитесь завершения или отмены обработки перед удалением": "Wait until processing finishes or is cancelled before deleting",
+  "Дождитесь завершения обработки AI перед удалением": "Wait until AI processing finishes before deleting",
+  "Сначала проверьте результат незавершённой отправки": "Check the result of the unfinished send first",
+  "Удаляем файлы публикации": "Deleting publication files",
+  "Файлы временно заняты; очистка будет повторена": "Files are temporarily busy; cleanup will be retried",
+  "Запись и неиспользуемые файлы удалены": "The record and unused files were deleted",
+
   "Изображения и предпросмотр обновляются автоматически…": "Images and preview are updating automatically…",
   "Не удалось обновить предпросмотр": "Could not update the preview",
   "Не удалось загрузить изображения или обновить предпросмотр. Проверьте источник и повторите загрузку.": "Could not load images or update the preview. Check the source and retry.",

@@ -317,7 +317,7 @@ class WebPlatformService(PlatformService):
     async def bulk(self, actor_id, payload, idempotency_key):
         items = payload.get('items', [])
         action = payload.get('action')
-        if action not in {'cancel', 'retry', 'enqueue', 'return-to-draft'} or not isinstance(items, list) or len(items) > 100:
+        if action not in {'cancel', 'retry', 'enqueue', 'return-to-draft', 'delete'} or not isinstance(items, list) or len(items) > 100:
             raise PlatformError(422, 'invalid_bulk', 'Недопустимая массовая команда')
         if payload.get('expected_selection_count') != len(items) or len({x.get('id') for x in items}) != len(items):
             raise PlatformError(409, 'selection_changed', 'Набор выбранных публикаций изменился')
@@ -325,7 +325,7 @@ class WebPlatformService(PlatformService):
         for item in items:
             try:
                 stable_key = str(__import__('uuid').uuid5(__import__('uuid').UUID(idempotency_key), str(item['id'])))
-                result = await self.publication_action(actor_id, item['id'], action,
+                result = await self.delete_publication(actor_id,item['id'],{'expected_version':item.get('expected_version')},stable_key) if action=='delete' else await self.publication_action(actor_id, item['id'], action,
                          {'expected_version': item.get('expected_version')}, stable_key)
                 results.append({'id': item['id'], 'status': 'success', 'result': result})
             except PlatformError as error:

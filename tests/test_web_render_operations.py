@@ -214,7 +214,10 @@ async def test_import_automatically_downloads_and_exposes_retry_after_source_fai
         downloader.assert_awaited_once()  # No endless background retry of an unavailable source.
         retry=await platform.prepare(1,job_id,'prepare',{'expected_version':dto['version']},str(uuid4()))
         async with asyncio.timeout(8):
-            while not (await platform.get_publication(1,job_id))['readiness']['ready']:
+            while True:
+                ready=(await platform.get_publication(1,job_id))['readiness']['ready']
+                finished=(await platform.operation(1,retry['operation_id']))['status']=='succeeded'
+                if ready and finished:break
                 await asyncio.sleep(.05)
         assert (await platform.operation(1,retry['operation_id']))['status']=='succeeded'
         assert downloader.await_count==2

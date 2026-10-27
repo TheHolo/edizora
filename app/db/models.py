@@ -13,7 +13,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session
-from sqlalchemy import event, inspect as orm_inspect
+from sqlalchemy import event, inspect as orm_inspect, select, func, cast
 
 from app.domain.enums import ContentKind, JobStatus, NewsTaskStatus
 
@@ -369,6 +369,18 @@ class AuditEvent(Base):
 
 @event.listens_for(Session, "before_flush")
 def _bump_versions(session, flush_context, instances):
+    # A deleted SQLite INTEGER PRIMARY KEY can otherwise be reused, making old
+    # editor URLs/receipts point to unrelated new publications. Preserve identity
+    # using the minimal deletion audit, without retaining the deleted content.
+    new_jobs=[record for record in session.new if isinstance(record,Job) and record.id is None]
+    if new_jobs:
+        connection=session.connection()
+        deleted_max=connection.scalar(select(func.max(cast(AuditEvent.resource_id,Integer))).where(AuditEvent.action=='publication.delete')) or 0
+        if deleted_max:
+            next_id=max(deleted_max,connection.scalar(select(func.max(Job.id))) or 0,
+                max((record.id or 0 for record in session.new if isinstance(record,Job)),default=0))
+            for record in new_jobs:
+                next_id+=1;record.id=next_id
     # Includes ORM writes from existing Telegram, AI and worker clients.
     for record in session.dirty:
         if isinstance(record, (Job, Channel)) and session.is_modified(record, include_collections=False):

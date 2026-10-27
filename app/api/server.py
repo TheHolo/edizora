@@ -245,6 +245,10 @@ def create_app(service, auth: AuthStore, *, config: WebConfig | None = None,
     async def patch(job_id: int, body: PublicationPatch, actor: Actor):
         return await invoke(service, "patch_publication", actor.user_id, job_id, body.model_dump(exclude_unset=True))
 
+    @app.delete("/api/v1/publications/{job_id}")
+    async def delete_publication(job_id:int,body:ActionInput,actor:Actor,idempotency_key:str|None=Header(None)):
+        return await invoke(service,"delete_publication",actor.user_id,job_id,body.model_dump(exclude_unset=True),key(idempotency_key))
+
     def create_route(kind):
         async def create(body: DraftInput, actor: Actor, idempotency_key: str | None = Header(None)):
             payload = body.model_dump(exclude_unset=True)

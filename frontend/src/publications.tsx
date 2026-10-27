@@ -1,7 +1,7 @@
 import { t } from './i18n';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, Check, Clock3, FileImage, Grid2X2, History, ImagePlus, List, Loader2, Plus, Save, Search, Send, Sparkles, Upload, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, Check, Clock3, FileImage, Grid2X2, History, ImagePlus, List, Loader2, Plus, Save, Search, Send, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import { api, ApiError, safeURL, upload } from './api';
 import { useCommand, useDebounce, useQuery } from './hooks';
 import { Link, setUnsaved, useNavigate } from './navigation';
@@ -34,6 +34,7 @@ export function Publications({ channels, channelID, timezone }: PageProps) {
   const query = useQuery<Page<Publication>>('/publications?'+params,10000);
   const operations = useQuery<Page<Operation>>('/operations?limit=5&active=true',10000);
   const command = useCommand();
+  const [deletionNotice,setDeletionNotice]=useState('');
   useEffect(() => {
     setSelected(new Map()); setCursor(''); setCursorStack([]);
     const p = new URLSearchParams();
@@ -48,7 +49,15 @@ export function Publications({ channels, channelID, timezone }: PageProps) {
     setSelected(previous => {const next=new Map(previous); if(next.has(id)) next.delete(id); else next.set(id,version); return next;});
   }
   function changeView(next: string) { setView(next); localStorage.setItem('publisher-view',next); }
+  async function remove(item:Publication){
+    if(!confirm(t("Удалить «{0}» навсегда? Запись, история и неиспользуемые медиа будут удалены из приложения. Сообщения в Telegram останутся. Отменить удаление нельзя.",[item.title])))return;
+    await command.run(()=>api<{cleanup_pending:boolean}>('/publications/'+item.id,{method:'DELETE',body:{expected_version:item.version}}),result=>{
+      setDeletionNotice(result.cleanup_pending?t("Запись удалена. Занятые файлы будут удалены автоматически после освобождения."):t("Запись и неиспользуемые медиа удалены."));
+      setSelected(previous=>{const next=new Map(previous);next.delete(item.id);return next;});query.reload();operations.reload();
+    });
+  }
   async function bulk(action: string) {
+    if(action==='delete'&&!confirm(t("Удалить выбранные публикации ({0}) навсегда? Записи, история и неиспользуемые медиа будут удалены. Сообщения в Telegram останутся. Отменить удаление нельзя.",[selected.size])))return;
     if(action === 'cancel' && !confirm(t("Отменить выбранные публикации (")+selected.size+t(")? Уже отправленные сообщения останутся в канале."))) return;
     await command.run(() => api<Record<string,unknown>>('/queue/bulk',{method:'POST',body:{action,items:[...selected].map(([id,expected_version]) => ({id,expected_version})),expected_selection_count:selected.size}}), report => {setBulkReport(report);setSelected(new Map());query.reload();});
   }
@@ -65,14 +74,14 @@ export function Publications({ channels, channelID, timezone }: PageProps) {
         <div className="segmented"><button className={view==='table'?'active':''} onClick={()=>changeView('table')} aria-label={t("Таблица")} aria-pressed={view==='table'}><List size={18}/></button><button className={view==='gallery'?'active':''} onClick={()=>changeView('gallery')} aria-label={t("Галерея")} aria-pressed={view==='gallery'}><Grid2X2 size={18}/></button></div>
         <details className="date-filter"><summary>{t("Период")}</summary><div className="popover"><label>{t("С даты")}<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>{t("По дату")}<input type="date" value={until} onChange={e=>setUntil(e.target.value)}/></label></div></details>
       </div>
-      <ErrorBlock error={query.error} retry={query.reload}/><ErrorBlock error={command.error}/>
+      <ErrorBlock error={query.error} retry={query.reload}/><ErrorBlock error={command.error}/>{deletionNotice&&<p className="notice" role="status">{deletionNotice}</p>}
       {intakeOperations.length>0&&<section className="intake-operations" aria-label={t("Материалы в подготовке")}>{intakeOperations.slice(0,5).map(operation=><div className="intake-row" key={operation.id}><Sparkles size={18}/><div><strong>{operation.kind==='news'?t("Готовится новость"):t("Импорт изображений")}</strong><p className="muted small">{operation.message||t("Сервер принял задачу")}</p></div><Status value={operation.status}/><Link href={'/operations/'+operation.id} className="button secondary">{t("Подробнее")}</Link></div>)}</section>}
-      {selected.size>0 && <div className="selection-toolbar"><strong>{t("Выбрано: ")}{selected.size}</strong><button disabled={command.busy} onClick={()=>void bulk('enqueue')}>{t("В очередь")}</button><button disabled={command.busy} onClick={()=>void bulk('retry')}>{t("Повторить ошибки")}</button><button disabled={command.busy} onClick={()=>void bulk('cancel')}>{t("Отменить")}</button><button className="icon-button" aria-label={t("Снять выделение")} onClick={()=>setSelected(new Map())}><X size={17}/></button></div>}
-      {bulkReport && <details className="notice" open><summary>{t("Результаты массовой команды")}</summary><ul className="bulk-results">{(Array.isArray(bulkReport.items)?bulkReport.items:[]).map((value:unknown,index:number)=>{const item=value as {id?:ID;status?:string;error?:{message?:string}};return <li key={item.id||index}><Link href={'/publications/'+item.id}>{t("Публикация № ")}{item.id}</Link><span>{{success:t("Выполнено"),conflict:t("Изменилась версия или состояние"),blocked:t("Действие заблокировано"),not_found:t("Не найдена")}[item.status||'']||item.status}</span>{item.error?.message&&<p className="small muted">{item.error.message}</p>}</li>;})}</ul></details>}
+      {selected.size>0 && <div className="selection-toolbar"><strong>{t("Выбрано: ")}{selected.size}</strong><button disabled={command.busy} onClick={()=>void bulk('enqueue')}>{t("В очередь")}</button><button disabled={command.busy} onClick={()=>void bulk('retry')}>{t("Повторить ошибки")}</button><button disabled={command.busy} onClick={()=>void bulk('cancel')}>{t("Отменить")}</button><button className="danger-text" disabled={command.busy} onClick={()=>void bulk('delete')}><Trash2 size={15}/>{t("Удалить навсегда")}</button><button className="icon-button" aria-label={t("Снять выделение")} onClick={()=>setSelected(new Map())}><X size={17}/></button></div>}
+      {bulkReport && <details className="notice" open><summary>{t("Результаты массовой команды")}</summary><ul className="bulk-results">{(Array.isArray(bulkReport.items)?bulkReport.items:[]).map((value:unknown,index:number)=>{const item=value as {id?:ID;status?:string;error?:{message?:string}};return <li key={item.id||index}><span>{t("Публикация № ")}{item.id}</span><span>{{success:t("Выполнено"),conflict:t("Изменилась версия или состояние"),blocked:t("Действие заблокировано"),not_found:t("Не найдена")}[item.status||'']||item.status}</span>{item.error?.message&&<p className="small muted">{item.error.message}</p>}</li>;})}</ul></details>}
       {query.loading && !query.data ? <Loading/> : !items.length ? <Panel><Empty title={t("Здесь появятся ваши материалы")} description={search || status || kind ? t("По выбранным фильтрам ничего не найдено. Попробуйте изменить условия.") : t("Добавьте ссылку, новость или текст. Сначала появится черновик — публикация запускается отдельным действием.")} action={<Link className="button secondary" href="/publications/new"><Plus size={17}/>{t("Создать публикацию")}</Link>}/></Panel> :
       view==='gallery' ? <div className="publication-gallery">{items.map(item=><article className="publication-card" key={item.id}>
         <div className="gallery-image"><Thumbnail src={item.album?.cover} title={item.title}/><label className="gallery-checkbox"><input type="checkbox" checked={selected.has(item.id)} onChange={()=>choose(item.id,item.version)} aria-label={t("Выбрать ")+item.title}/></label>{!!item.album?.total && <span className="media-count"><FileImage size={14}/>{item.album.selected} {t(" кадров")}</span>}</div>
-        <div className="gallery-body"><Link className="title-link" href={'/publications/'+item.id}>{item.title || t("Без названия")}</Link><p className="muted small">{item.channel?.name || t("Канал не выбран")}</p><div className="between"><Status value={item.status} uncertain={typeof item.error==='object' && item.error?.code==='uncertain_publish'}/><span className="small muted">{date(item.schedule?.utc || item.schedule?.estimate,timezone,true)}</span></div></div>
+        <div className="gallery-body">{item.allowed_actions?.includes('delete')&&<button className="icon-button danger-text gallery-delete" disabled={command.busy} onClick={()=>void remove(item)} aria-label={t("Удалить публикацию «{0}»",[item.title])}><Trash2 size={16}/></button>}<Link className="title-link" href={'/publications/'+item.id}>{item.title || t("Без названия")}</Link><p className="muted small">{item.channel?.name || t("Канал не выбран")}</p><div className="between"><Status value={item.status} uncertain={typeof item.error==='object' && item.error?.code==='uncertain_publish'}/><span className="small muted">{date(item.schedule?.utc || item.schedule?.estimate,timezone,true)}</span></div></div>
       </article>)}</div> :
       <div className="table-container"><table className="publications-table"><thead><tr><th className="check-cell"><input type="checkbox" aria-label={t("Выбрать все на странице")} checked={!!items.length && items.every(item=>selected.has(item.id))} onChange={e=>setSelected(e.target.checked?new Map(items.map(item=>[item.id,item.version])):new Map())}/></th><th>{t("Материал")}</th><th className="channel-column">{t("Канал")}</th><th>{t("Статус")}</th><th className="schedule-column">{t("Публикация")}</th><th><span className="sr-only">{t("Открыть")}</span></th></tr></thead><tbody>{items.map(item=><tr key={item.id}>
         <td className="check-cell"><input type="checkbox" checked={selected.has(item.id)} onChange={()=>choose(item.id,item.version)} aria-label={t("Выбрать ")+item.title}/></td>
@@ -80,7 +89,7 @@ export function Publications({ channels, channelID, timezone }: PageProps) {
         <td className="channel-column"><span className="channel-pill" title={item.channel?.name || channels.find(c=>c.id===item.channel_id)?.name || t("Не выбран")}><Send size={13}/><span>{item.channel?.name || channels.find(c=>c.id===item.channel_id)?.name || t("Не выбран")}</span></span></td>
         <td><Status value={item.status} uncertain={typeof item.error==='object' && item.error?.code==='uncertain_publish'}/></td>
         <td className="schedule-column"><span className="small">{date(item.schedule?.utc || item.schedule?.estimate,timezone,true)}</span>{item.schedule?.kind==='estimate' && <span className="muted tiny">{t("Прогноз")}</span>}</td>
-        <td><Link href={'/publications/'+item.id} className="icon-button" aria-label={t("Открыть ")+item.title}>···</Link></td>
+        <td><Link href={'/publications/'+item.id} className="icon-button" aria-label={t("Открыть ")+item.title}>···</Link>{item.allowed_actions?.includes('delete')&&<button className="icon-button danger-text" disabled={command.busy} onClick={()=>void remove(item)} aria-label={t("Удалить публикацию «{0}»",[item.title])}><Trash2 size={16}/></button>}</td>
       </tr>)}</tbody></table></div>}
       <div className="pagination"><span className="muted small">{query.data ? t("Показано ")+items.length+(query.data.total!==undefined?t(" из ")+query.data.total:'') : ''}</span><div><button disabled={!cursorStack.length} onClick={()=>{const stack=[...cursorStack];setCursor(stack.pop()||'');setCursorStack(stack);}}>{t("Назад")}</button><button disabled={!query.data?.next_cursor} onClick={()=>{setCursorStack(v=>[...v,cursor]);setCursor(query.data?.next_cursor||'');}}>{t("Дальше")}</button></div></div>
     </div><aside className="activity-rail"><h2>{t("Сейчас в работе")}</h2>{activeOperations.length ? activeOperations.slice(0,3).map(operation=><OperationCard operation={operation} compact key={operation.id}/>) : <Panel><div className="quiet-state"><span className="check-circle"><Check size={20}/></span><strong>{t("Всё спокойно")}</strong><p>{t("Принятые операции появятся здесь. Можно продолжать работу с материалами.")}</p></div></Panel>}<div className="rail-note"><Clock3 size={17}/><p>{t("Точное время и прогноз публикации учитывают часовой пояс ")}<strong>{timezone}</strong>.</p></div></aside></div>
@@ -147,6 +156,7 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
   const [assetError,setAssetError]=useState<unknown>(null); const [uploading,setUploading]=useState(false);
   const command=useCommand();const navigate=useNavigate();const loaded=useRef('');
   const saving=useRef<Promise<Publication|undefined>|null>(null);
+  const deleting=useRef(false);
   const currentJob=useRef<Publication|null>(null);const draftRef=useRef(draft);draftRef.current=draft;const savedRef=useRef(saved);savedRef.current=saved;
   currentJob.current=query.data;
   const historyQuery=useQuery<{events:EventRecord[];publications:{id:ID;message_ids:number[];published_at:string}[]}>(historyOpen?'/publications/'+id+'/history':null);
@@ -172,6 +182,7 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
     return()=>{setUnsaved(false);window.removeEventListener('beforeunload',warn);};
   },[dirty]);
   async function save():Promise<Publication|undefined>{
+    if(deleting.current)return;
     if(saving.current){const result=await saving.current;if(!result)return;return save();}
     if(!draftRef.current||!currentJob.current)return;
     if(JSON.stringify(draftRef.current)===JSON.stringify(savedRef.current))return currentJob.current;
@@ -207,6 +218,15 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
     await command.run(()=>api<CommandResult>('/publications/'+id+'/actions/'+name,{method:'POST',body:{expected_version:job.version,...extra}}),result=>{
       if(result.operation_id)navigate('/operations/'+result.operation_id);else {query.reload();setScheduleOpen(false);setResolveOpen(false);}
     });
+  }
+  async function removePublication(){
+    const job=currentJob.current;if(!job||saving.current)return;
+    if(!confirm(t("Удалить «{0}» навсегда? Запись, история и неиспользуемые медиа будут удалены из приложения. Сообщения в Telegram останутся. Отменить удаление нельзя.",[job.title])))return;
+    deleting.current=true;
+    try{await command.run(()=>api<{cleanup_pending:boolean;cleanup_operation_id:string}>('/publications/'+id,{method:'DELETE',body:{expected_version:job.version}}),result=>{
+      setUnsaved(false);draftRef.current=savedRef.current;
+      if(result.cleanup_pending)navigate('/operations/'+result.cleanup_operation_id);else navigate('/publications');
+    });}finally{deleting.current=false;}
   }
   async function preparation(path:string){
     const job=await save();if(!job)return;
@@ -327,6 +347,7 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
     {scheduleOpen&&<Panel title={t("Точное время публикации")}><p className="muted">{t("Не раньше выбранного момента · ")}{timezone}</p><div className="inline-form"><label>{t("Дата и время")}<input type="datetime-local" value={scheduleInput} onChange={e=>{setScheduleInput(e.target.value);setChosenInstant('');}}/></label>{candidates.length>1&&<label>{t("Уточните момент")}<select value={chosenInstant} onChange={e=>setChosenInstant(e.target.value)}><option value="">{t("Время встречается дважды")}</option>{candidates.map(candidate=><option value={candidate} key={candidate}>{candidate} UTC</option>)}</select></label>}<button className="primary" disabled={command.busy||!candidates.length||(candidates.length>1&&!chosenInstant)} onClick={()=>void action('schedule',{scheduled_at:chosenInstant||candidates[0],timezone})}>{t("Запланировать")}</button><button onClick={()=>setScheduleOpen(false)}>{t("Закрыть")}</button></div>{scheduleInput&&!candidates.length&&<p className="inline-error">{t("Такого местного времени нет в выбранном часовом поясе. Выберите другое.")}</p>}</Panel>}
     {resolveOpen&&<Panel title={t("Ручная проверка результата")}><p>{t("Проверьте канал и известные сообщения. Это действие записывает ваше заключение и само ничего не отправляет.")}</p><label>{t("Результат")}<select value={resolution} onChange={e=>setResolution(e.target.value as typeof resolution)}><option value="still_unknown">{t("Пока неизвестно")}</option><option value="published">{t("Отправлено")}</option><option value="not_published">{t("Точно не отправлено")}</option><option value="partial">{t("Отправлена только часть")}</option></select></label><label>{t("Известные ID сообщений")}<input value={knownIDs} onChange={e=>setKnownIDs(e.target.value)} placeholder={t("Через пробел")}/></label><label>{t("Примечание")}<textarea value={note} onChange={e=>setNote(e.target.value)} rows={2}/></label><button onClick={()=>void action('resolve-uncertain',{outcome:resolution,note,message_ids:knownIDs.split(/[\s,]+/).filter(Boolean).map(Number)} satisfies Omit<import('./types').API['UncertainResolution'],'expected_version'>)} disabled={command.busy}>{t("Сохранить заключение")}</button></Panel>}
     <footer className="editor-footer"><span className="muted small">{!job.readiness?.ready?readinessMessage:t("Черновик готов к следующему шагу")}</span><div className="button-row">
+      {allowed('delete')&&<button className="danger-text" onClick={()=>void removePublication()} disabled={command.busy||saveState==='saving'}><Trash2 size={16}/>{t("Удалить навсегда")}</button>}
       {allowed('return-to-draft')&&<button onClick={()=>void action('return-to-draft')} disabled={command.busy}>{t("Вернуть в черновик")}</button>}
       {allowed('resolve-uncertain')&&<button onClick={()=>setResolveOpen(true)}>{t("Проверить результат")}</button>}
       {allowed('confirm-duplicate')&&<button onClick={()=>{if(confirm(t("Разрешить сознательный повтор этого источника в выбранном канале? Само подтверждение ничего не отправляет.")))void action('confirm-duplicate');}} disabled={command.busy}>{t("Разрешить повтор источника")}</button>}

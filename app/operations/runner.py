@@ -1,7 +1,7 @@
 import asyncio
 import time
 from uuid import uuid4
-from sqlalchemy import select, text
+from sqlalchemy import select, text, or_
 from sqlalchemy.orm import selectinload
 from app.db.models import ApplicationState, Operation, OperationEvent, Job, MediaAsset, JobAsset, NewsTask, utcnow
 from app.application.platform import channel_render_hash
@@ -48,8 +48,14 @@ class OperationRunner:
                 await self._queue_preparations()
                 next_preparation_check=time.monotonic()+1
             async with self.platform.sessions() as session:
-                op=await session.scalar(select(Operation).where(Operation.status=="queued",Operation.kind.in_(["import","prepare","title_translation","reimport","telegram_preview"])).order_by(Operation.created_at).limit(1))
+                await session.execute(text("BEGIN IMMEDIATE"))
+                op=await session.scalar(select(Operation).where(Operation.status=="queued",
+                    Operation.kind.in_(["import","prepare","title_translation","reimport","telegram_preview","storage_cleanup"]),
+                    or_(Operation.kind!="storage_cleanup",Operation.payload["retry_at"].as_float().is_(None),Operation.payload["retry_at"].as_float()<=time.time())
+                    ).order_by(Operation.created_at).limit(1))
                 operation_id=op.id if op else None
+                if op:op.status="running"
+                await session.commit()
             if not operation_id:
                 await asyncio.sleep(.25);continue
             self.active_operation=operation_id
@@ -59,6 +65,7 @@ class OperationRunner:
                 elif op.kind=="prepare":await self._prepare(operation_id)
                 elif op.kind=='title_translation':await self._translation(operation_id)
                 elif op.kind=='reimport':await self._reimport(operation_id)
+                elif op.kind=="storage_cleanup":await self.platform.cleanup_deleted_media(operation_id)
                 else:await self._telegram_preview(operation_id)
             except Exception as error:
                 # Never serialize provider traceback, headers or credential-bearing URL.
@@ -183,11 +190,13 @@ class OperationRunner:
             await self._event(operation_id,"running","media",f"Готовим медиа {index+1} из {len(links)}",progress={"unit":"files","completed":index,"total":len(links),"percent":index/len(links)*100,"estimated_seconds_remaining":None})
             item=post.media_items[index]
             downloaded=await self.application.workers.downloader.download(f"prepare-{operation_id}",item)
-            stored=await asyncio.to_thread(store_bytes,self.platform.data_root,downloaded.path.read_bytes())
-            async with self.platform.sessions() as session,session.begin():
+            async with self.platform.sessions() as session:
+                await session.execute(text("BEGIN IMMEDIATE"))
+                stored=await asyncio.to_thread(store_bytes,self.platform.data_root,downloaded.path.read_bytes())
                 current=await session.get(MediaAsset,asset.id)
                 for key,value in stored.items():
                     if key!="id":setattr(current,key,value)
+                await session.commit()
         # Prepare and pin the actual Telegram variant before queue admission.
         from app.domain.models import DownloadedMedia
         from app.domain.enums import MediaType
@@ -206,11 +215,13 @@ class OperationRunner:
                     prepared=await MediaService().prepare(DownloadedMedia(source=source,path=path,mime_type=asset.mime_type,size=asset.size),job.channel.publish_mode)
                     entry['as_document']=prepared.as_document
                     if prepared.path!=path:
-                        stored=await asyncio.to_thread(store_bytes,self.platform.data_root,prepared.path.read_bytes())
-                        async with self.platform.sessions() as session,session.begin():
+                        async with self.platform.sessions() as session:
+                            await session.execute(text("BEGIN IMMEDIATE"))
+                            stored=await asyncio.to_thread(store_bytes,self.platform.data_root,prepared.path.read_bytes())
                             variant=MediaAsset(**stored,source_kind='prepared',source_reference=asset.id,filename=asset.filename)
                             session.add(variant);await session.flush()
                             entry.update(asset_id=variant.id,storage_key=variant.storage_key)
+                            await session.commit()
                         prepared.path.unlink(missing_ok=True)
             manifest.append(entry)
         async with self.platform.sessions() as session,session.begin():

@@ -247,6 +247,8 @@ class PlatformService:
         if previous:
             if previous.payload_hash != digest:
                 raise PlatformError(409, "idempotency_conflict", "Этот ключ уже использован для другой команды")
+            if previous.result.get("deleted_resource"):
+                raise PlatformError(410,"publication_deleted","Публикация уже удалена навсегда")
             return previous.result, digest
         return None, digest
 
@@ -340,6 +342,8 @@ class PlatformService:
         operation = await session.scalar(select(Operation.id).where(Operation.job_id == job.id).order_by(Operation.created_at.desc()).limit(1))
         editable = job.status in {"waiting_confirmation", "queued", "scheduled"}
         actions = ["save", "cancel"] if editable else []
+        if job.status in {"waiting_confirmation","queued","scheduled","completed","failed","cancelled"} and job.channel.active_job_id!=job.id:
+            actions.append("delete")
         if job.status == "waiting_confirmation":
             actions += ["prepare","translate","reimport"] + (["enqueue", "schedule", "publish-now","preview-in-telegram"] if ready else [])
         if job.status in {"waiting_confirmation", "failed"} and job.normalized_url and not job.allow_duplicate and job.error_code != "uncertain_publish":
@@ -472,6 +476,14 @@ class PlatformService:
         session.add(op)
         session.add(OperationEvent(operation_id=op.id, sequence=1, stage_key="accepted", status=status, message=message))
         return op
+
+    async def delete_publication(self,actor_id,job_id,payload,idempotency_key):
+        from app.application.deletion import delete_publication
+        return await delete_publication(self,actor_id,job_id,payload,idempotency_key)
+
+    async def cleanup_deleted_media(self,operation_id):
+        from app.application.deletion import cleanup_deleted_media
+        return await cleanup_deleted_media(self,operation_id)
 
     async def patch_publication(self, actor_id, job_id, payload):
         payload=dict(payload)
