@@ -138,6 +138,7 @@ class VpsNewsApiClient:
                     headers=self._headers,
                     json=json,
                     timeout=self.timeout,
+                    allow_redirects=False,
                 )
                 if response.status in {409, 410}:
                     raise LeaseLostError(f"task lease is no longer valid (HTTP {response.status})")

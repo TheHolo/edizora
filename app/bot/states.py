@@ -9,6 +9,10 @@ class EditPreview(StatesGroup):
     waiting_for_schedule = State()
 
 
+class EditAlbum(StatesGroup):
+    waiting_for_order = State()
+
+
 class CreatePublication(StatesGroup):
     waiting_for_urls = State()
     waiting_for_channel = State()

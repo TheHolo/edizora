@@ -1,6 +1,7 @@
 .git
 .env
 .venv
+.venv-*/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -10,3 +11,11 @@ data/
 storage/
 tests/
 *.log
+.codex-*/
+.agents/
+.cache/
+backups/
+.coverage*
+htmlcov/
+work/
+output/desktop/

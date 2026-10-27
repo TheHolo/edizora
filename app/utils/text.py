@@ -23,6 +23,23 @@ class _TextExtractor(HTMLParser):
             self.parts.append(" ")
 
 
+class _TelegramTextExtractor(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+
+def telegram_html_length(value: str) -> int:
+    """Count visible text after parsing entities, preserving whitespace and newlines."""
+    parser = _TelegramTextExtractor()
+    parser.feed(value)
+    parser.close()
+    return len("".join(parser.parts))
+
+
 def plain_text(value: str) -> str:
     parser = _TextExtractor()
     parser.feed(value or "")

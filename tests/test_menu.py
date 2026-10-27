@@ -313,6 +313,7 @@ def test_help_catalog_exactly_covers_router_slash_commands():
     router_paths = [
         Path(__file__).parents[1] / "app" / "bot" / "router.py",
         Path(__file__).parents[1] / "app" / "bot" / "news_ui.py",
+        Path(__file__).parents[1] / "app" / "bot" / "model_ui.py",
     ]
     routed_commands = {
         argument.value

@@ -1,4 +1,5 @@
 import json
+import re
 import tomllib
 from pathlib import Path
 from typing import Annotated, Any
@@ -22,6 +23,8 @@ REPOSITORY_SETTING_FIELDS = {
     "auto_add_source_tags",
     "auto_translate_titles",
     "translation_timeout",
+    "translation_lmstudio_timeout",
+    "translation_fallback_mymemory",
     "delete_files_after_publish",
     "files_ttl_hours",
     "timezone",
@@ -57,6 +60,8 @@ class Settings(BaseSettings):
     auto_add_source_tags: bool = True
     auto_translate_titles: bool = True
     translation_timeout: int = Field(5, ge=1, le=30)
+    translation_lmstudio_timeout: int = Field(60, ge=1, le=600)
+    translation_fallback_mymemory: bool = True
     delete_files_after_publish: bool = True
     files_ttl_hours: int = 24
     timezone: str = "UTC"
@@ -114,6 +119,25 @@ class Settings(BaseSettings):
                 raise ValueError(  # noqa: TRY004
                     "each channel must have a string alias and an object value"
                 )
+            if not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", alias):
+                raise ValueError("channel alias must contain 1-64 Latin letters, digits, _ or -")
+            chat_id = settings.get("chat_id")
+            if isinstance(chat_id, bool) or not isinstance(chat_id, (str, int)) or not str(chat_id).strip():
+                raise ValueError(f"channel {alias}: chat_id is required")
+            if settings.get("publish_mode", "auto") not in ("auto", "photo", "document"):
+                raise ValueError(f"channel {alias}: publish_mode must be auto, photo or document")
+            interval = settings.get("publish_interval_seconds", 0)
+            if isinstance(interval, bool) or not isinstance(interval, int) or interval < 0:
+                raise ValueError(f"channel {alias}: publish_interval_seconds must be a non-negative integer")
+            if "enabled" in settings and not isinstance(settings["enabled"], bool):
+                raise ValueError(f"channel {alias}: enabled must be true or false")
+            if "tags" in settings:
+                from app.utils.tags import normalize_tags
+
+                tags = settings["tags"]
+                if not isinstance(tags, list) or any(not isinstance(tag, str) for tag in tags):
+                    raise ValueError(f"channel {alias}: tags must be a list of strings")
+                settings = {**settings, "tags": normalize_tags(tags)}
             channels[alias] = settings
         return channels
 

@@ -62,20 +62,20 @@ class MediaService:
 
     @staticmethod
     def _verify(path: Path) -> tuple[int, int, str | None]:
-        with Image.open(path) as image:
+        with Image.open(path, formats=sorted(SUPPORTED_IMAGE_FORMATS)) as image:
             if image.format not in SUPPORTED_IMAGE_FORMATS:
                 raise MediaValidationError(f"Формат изображения {image.format or 'неизвестен'} не поддерживается")
             if image.width * image.height > MAX_IMAGE_PIXELS:
                 raise MediaValidationError("Изображение превышает допустимое количество пикселей")
             image.verify()
-        with Image.open(path) as image:
+        with Image.open(path, formats=sorted(SUPPORTED_IMAGE_FORMATS)) as image:
             return image.width, image.height, image.format
 
     @staticmethod
     def _fit_for_telegram_photo(path: Path) -> Path | None:
         target = path.with_name(f"{path.stem}_telegram.jpg")
         try:
-            with Image.open(path) as source:
+            with Image.open(path, formats=sorted(SUPPORTED_IMAGE_FORMATS)) as source:
                 image = ImageOps.exif_transpose(source)
                 if image.mode in {"RGBA", "LA"} or (image.mode == "P" and "transparency" in image.info):
                     rgba = image.convert("RGBA")

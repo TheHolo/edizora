@@ -28,6 +28,7 @@ class NewsApiServer:
         default_lease_seconds: int, on_progress: TaskCallback | None = None,
         on_complete: CompletionCallback | None = None,
         on_failure: TaskCallback | None = None,
+        use_worker_model: bool = False,
     ) -> None:
         self.tasks = tasks
         self.token = token
@@ -37,6 +38,7 @@ class NewsApiServer:
         self.on_progress = on_progress
         self.on_complete = on_complete
         self.on_failure = on_failure
+        self.use_worker_model = use_worker_model
         self.runner: web.AppRunner | None = None
         self.sweeper_task: asyncio.Task[None] | None = None
 
@@ -78,7 +80,7 @@ class NewsApiServer:
     async def _auth(self, request: web.Request, handler):
         supplied = request.headers.get("Authorization", "")
         expected = f"Bearer {self.token}"
-        if not hmac.compare_digest(supplied, expected):
+        if not hmac.compare_digest(supplied.encode("utf-8"), expected.encode("utf-8")):
             raise web.HTTPUnauthorized(text="unauthorized")
         return await handler(request)
 
@@ -112,6 +114,7 @@ class NewsApiServer:
             lease_seconds=lease_seconds,
             source_types=normalized_source_types,
             model_name=model_name,
+            use_worker_model=self.use_worker_model,
         )
         if task is None:
             return web.Response(status=204)

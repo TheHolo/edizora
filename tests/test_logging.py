@@ -1,6 +1,6 @@
 import logging
 
-from app.logging_config import SecretFilter
+from app.logging_config import SecretFilter, SecretFormatter
 
 
 def test_secrets_are_redacted():
@@ -23,4 +23,12 @@ def test_secrets_are_redacted():
     assert "lease-secret" not in record.getMessage()
     assert "session-secret" not in record.getMessage()
     assert "123456:" not in record.getMessage()
-    assert record.getMessage().count("[REDACTED]") == 5
+
+
+def test_traceback_and_lmstudio_credentials_are_redacted():
+    error = RuntimeError("HOME_WORKER_LMSTUDIO_API_KEY=private-key https://user:password-value@host")
+    record = logging.LogRecord("x", logging.ERROR, "", 0, "request failed", (), (RuntimeError, error, None))
+    formatted = SecretFormatter("%(message)s").format(record)
+    assert "private-key" not in formatted
+    assert "password-value" not in formatted
+    assert "[REDACTED]" in formatted

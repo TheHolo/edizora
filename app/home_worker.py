@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 from pathlib import Path
 
 import aiohttp
@@ -10,14 +11,18 @@ from app.logging_config import configure_logging
 from app.news.facade import NewsSourceFacade
 from app.news.home_runtime import HomeNewsWorker
 from app.news.http import PublicOnlyResolver
-from app.news.ollama_client import OllamaNewsClient
+from app.news.llm_factory import create_news_client, list_model_ids
 from app.news.vps_client import VpsNewsApiClient
 from app.news.worker_config import HomeWorkerSettings
+from app.news.worker_errors import LlmError
+from app.services.model_selection import ModelSelection
+
+logger = logging.getLogger(__name__)
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Process news drafts through a local Ollama instance",
+        description="Process news drafts through local LM Studio or Ollama",
     )
     parser.add_argument(
         "--config",
@@ -36,7 +41,13 @@ def _parser() -> argparse.ArgumentParser:
 async def main(*, config_file: Path, once: bool = False) -> None:
     settings = HomeWorkerSettings(_config_file=config_file)
     configure_logging(settings.log_level)
+    await run_worker(settings, once=once)
 
+
+async def run_worker(
+    settings: HomeWorkerSettings, *, once: bool = False,
+    model_selection: ModelSelection | None = None,
+) -> None:
     extractor_connector = aiohttp.TCPConnector(resolver=PublicOnlyResolver())
     async with (
         aiohttp.ClientSession(trust_env=False) as session,
@@ -52,30 +63,39 @@ async def main(*, config_file: Path, once: bool = False) -> None:
             worker_id=settings.worker_id,
             lease_seconds=settings.lease_seconds,
             source_types=settings.source_types,
-            model=settings.ollama_model,
+            model=settings.model_name,
             timeout_seconds=settings.request_timeout_seconds,
             max_retries=settings.max_retries,
             retry_backoff_seconds=settings.retry_backoff_seconds,
         )
-        ollama = OllamaNewsClient(
-            session,
-            base_url=settings.ollama_base_url,
-            model=settings.ollama_model,
-            timeout_seconds=settings.ollama_timeout_seconds,
-            max_retries=settings.ollama_max_retries,
-            retry_backoff_seconds=settings.retry_backoff_seconds,
-            temperature=settings.temperature,
-            keep_alive=settings.ollama_keep_alive,
-            context_length=settings.ollama_context_length,
-            max_predict_tokens=settings.ollama_max_predict_tokens,
-            max_source_chars_per_chunk=settings.max_source_chars_per_chunk,
-            max_source_chunks=settings.max_source_chunks,
-        )
+        was_ready: tuple[str, bool] | None = None
+
+        async def model_ready() -> bool:
+            nonlocal was_ready
+            current = model_selection.worker_settings() if model_selection is not None else settings
+            try:
+                ready = bool(current.model_name) and current.model_name in await list_model_ids(session, current)
+            except LlmError:
+                ready = False
+            if ready:
+                # Only replace the client between jobs, never during a rewrite.
+                if worker.ollama is None or worker.ollama.model != current.model_name:
+                    worker.ollama = create_news_client(session, current)
+                api.model = current.model_name
+            if (current.model_name, ready) != was_ready:
+                if ready:
+                    logger.info("local_model_ready provider=%s model=%s", current.llm_provider, current.model_name)
+                else:
+                    logger.warning("local_model_unavailable_news_waiting provider=%s", settings.llm_provider)
+                was_ready = (current.model_name, ready)
+            return ready
+
         worker = HomeNewsWorker(
             api=api,
             extractor=extractor,
-            ollama=ollama,
+            ollama=None,
             poll_interval_seconds=settings.poll_interval_seconds,
+            ready=model_ready,
         )
         if once:
             await worker.run_once()

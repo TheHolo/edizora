@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from collections.abc import Callable
 
 from app.db.models import Channel, NewsTask
 from app.news.models import NewsSourceKind, NewsSourceRequest
@@ -16,11 +17,13 @@ class NewsSubmissionService:
     def __init__(
         self, *, jobs: JobService, tasks: NewsTaskService, default_channel_alias: str,
         model_name: str, max_attempts: int, enabled: bool = True,
+        model_resolver: Callable[[], str] | None = None,
     ) -> None:
         self.jobs = jobs
         self.tasks = tasks
         self.default_channel_alias = default_channel_alias
         self.model_name = model_name
+        self.model_resolver = model_resolver
         self.max_attempts = max_attempts
         self.enabled = enabled
 
@@ -61,7 +64,7 @@ class NewsSubmissionService:
             source_kind=request.kind.value,
             input_payload=payload,
             user_tags=user_tags or [],
-            model_name=self.model_name,
+            model_name=(self.model_resolver() if self.model_resolver else self.model_name) or None,
             max_attempts=self.max_attempts,
         )
         return QueuedNews(task=task, channel=channel)

@@ -19,6 +19,7 @@ async def test_application_bootstraps_without_network():
     assert application.dispatcher.resolve_used_update_types()
     assert isinstance(application.http.connector._resolver, PublicOnlyResolver)
     await application.http.close()
+    await application.local_http.close()
     await application.bot.session.close()
     await application.engine.dispose()
 

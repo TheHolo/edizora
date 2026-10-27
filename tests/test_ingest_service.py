@@ -78,11 +78,14 @@ async def test_missing_album_numbers_are_reported_after_fetch():
         await service.fetch(sources[0])
 
 
-async def test_album_without_selection_is_checked_against_full_count():
+async def test_large_album_keeps_all_images_for_editor_and_defaults_to_first_ten():
     provider = AlbumProvider("pixiv", 19)
 
-    with pytest.raises(TooManyMediaError, match=r"19 изображений.*10.*\[1,3,5-7\]"):
-        await _service(provider).fetch("https://pixiv.test/album")
+    post = await _service(provider).fetch("https://pixiv.test/album")
+    assert len(post.media_items) == 10
+    assert len(post.metadata["artwork_album"]["catalog"]) == 19
+    assert post.metadata["artwork_album"]["automatic_selection"] is True
+    assert post.metadata["selected_media_numbers"] == list(range(1, 11))
 
 
 async def test_album_limit_can_still_be_disabled():

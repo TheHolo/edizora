@@ -7,11 +7,12 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from aiogram import Bot
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.db.models import Channel, Job, MediaRecord, Publication
+from app.db.models import Channel, Job, MediaRecord, Publication, JobAsset, MediaAsset
 from app.domain.enums import ContentKind, JobStatus, MediaType
-from app.domain.exceptions import ApplicationError, DuplicatePublicationError
+from app.domain.exceptions import ApplicationError, DuplicatePublicationError, UncertainPublishError
 from app.domain.models import PreparedMedia
 from app.services.caption_service import CaptionService
 from app.services.download_service import DownloadService
@@ -21,7 +22,7 @@ from app.services.news_render_service import NewsRenderService
 from app.services.preview_service import deserialize_post
 from app.services.publisher_service import TelegramPublisher
 from app.services.translation_service import TranslationService
-from app.utils.tags import merge_tags
+from app.utils.tags import publication_tags
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,9 @@ class WorkerPool:
             except asyncio.CancelledError:
                 raise
             except Exception as error:
+                if getattr(error,"code",None)=="publication_blocked":
+                    await self.jobs.defer(job.id)
+                    continue
                 retryable = isinstance(error, ApplicationError) and error.retryable
                 await self.jobs.fail(job.id, error, retryable)
                 logger.exception("job_failed job_id=%s provider=%s attempt=%s", job.id, job.provider, job.attempts)
@@ -131,6 +135,8 @@ class WorkerPool:
                 self._set_idle(index)
 
     async def _process(self, job: Job) -> None:
+        if getattr(self.jobs, "gate", None):
+            return await self._process_managed(job)
         self._set_job_stage(job.id, JobStatus.RESOLVING)
         post = deserialize_post(job.post_data)
         if post.content_kind == ContentKind.ARTWORK:
@@ -165,9 +171,10 @@ class WorkerPool:
             await self.jobs.transition(job.id, JobStatus.CANCELLED)
             return
         caption_override = getattr(job, "caption_override", None)
-        caption_tags = job.user_tags
-        if self.auto_add_source_tags:
-            caption_tags = merge_tags(job.user_tags, job.source_tags, self.max_tags, self.max_tag_length)
+        caption_tags = publication_tags(
+            job.user_tags, job.source_tags, getattr(job.channel, "default_tags", None),
+            include_source=self.auto_add_source_tags, max_tags=self.max_tags, max_length=self.max_tag_length,
+        )
         if caption_override is not None:
             caption = (
                 self.news_renderer.build_custom(caption_override, post, caption_tags)
@@ -185,37 +192,87 @@ class WorkerPool:
         await self.jobs.transition(job.id, JobStatus.PUBLISHING)
         self._set_job_stage(job.id, JobStatus.PUBLISHING)
         result = await self.publisher.publish(job, post, prepared, job.channel, caption)
-        async with self.sessions() as session, session.begin():
-            session.add(Publication(
-                job_id=job.id, channel_id=job.target_channel_id, telegram_chat_id=result.chat_id,
-                telegram_message_ids=result.message_ids, published_at=result.published_at, caption=caption,
-            ))
-            channel = await session.get(Channel, job.target_channel_id)
-            if channel:
-                update_channel_schedule_after_publication(channel, job, result.published_at)
-            for source, prepared_item, message_id in zip(
-                post.media_items, prepared, result.message_ids, strict=False
-            ):
-                downloaded_item = downloaded_by_order.get(source.order)
-                session.add(MediaRecord(
-                    job_id=job.id, source_url=source.url,
-                    local_path=str(downloaded_item.path) if downloaded_item else None,
-                    prepared_path=str(prepared_item.path) if prepared_item.path else None,
-                    filename=source.filename,
-                    mime_type=downloaded_item.mime_type if downloaded_item else source.mime_type,
-                    media_type=source.media_type,
-                    size=downloaded_item.size if downloaded_item else source.size,
-                    width=downloaded_item.width if downloaded_item else source.width,
-                    height=downloaded_item.height if downloaded_item else source.height,
-                    sort_order=source.order,
-                    download_status="completed" if downloaded_item else "telegram",
-                    publish_status="completed", telegram_message_id=message_id,
+        try:
+            async with self.sessions() as session, session.begin():
+                session.add(Publication(
+                    job_id=job.id, channel_id=job.target_channel_id, telegram_chat_id=result.chat_id,
+                    telegram_message_ids=result.message_ids, published_at=result.published_at, caption=caption,
                 ))
-        await self.jobs.transition(job.id, JobStatus.COMPLETED)
+                channel = await session.get(Channel, job.target_channel_id)
+                if channel:
+                    update_channel_schedule_after_publication(channel, job, result.published_at)
+                    from app.application.scheduling import record_catchup_success
+                    await record_catchup_success(session,job,result.published_at)
+                for source, prepared_item, message_id in zip(
+                    post.media_items, prepared, result.message_ids, strict=False
+                ):
+                    downloaded_item = downloaded_by_order.get(source.order)
+                    session.add(MediaRecord(
+                        job_id=job.id, source_url=source.url,
+                        local_path=str(downloaded_item.path) if downloaded_item else None,
+                        prepared_path=str(prepared_item.path) if prepared_item.path else None,
+                        filename=source.filename,
+                        mime_type=downloaded_item.mime_type if downloaded_item else source.mime_type,
+                        media_type=source.media_type,
+                        size=downloaded_item.size if downloaded_item else source.size,
+                        width=downloaded_item.width if downloaded_item else source.width,
+                        height=downloaded_item.height if downloaded_item else source.height,
+                        sort_order=source.order,
+                        download_status="completed" if downloaded_item else "telegram",
+                        publish_status="completed", telegram_message_id=message_id,
+                    ))
+            await self.jobs.transition(job.id, JobStatus.COMPLETED)
+        except Exception as error:
+            raise UncertainPublishError("Telegram подтвердил отправку, но запись истории не завершена; проверьте канал") from error
         logger.info("job_published job_id=%s provider=%s channel=%s messages=%s", job.id, job.provider, job.channel.alias, len(result.message_ids))
         await self._notify(job, f"Задание #{job.id} успешно опубликовано в {job.channel.alias}.")
         if self.delete_after_publish:
             shutil.rmtree(self.storage / "jobs" / str(job.id), ignore_errors=True)
+
+    async def _process_managed(self, job: Job) -> None:
+        """Prepared jobs remain publishable without the home AI or source website."""
+        from app.storage.assets import safe_path
+        async with self.sessions() as session:
+            current = await self.jobs.get(job.id)
+            plan = current.render_plan
+            if not plan:
+                raise ApplicationError("Сначала подготовьте публикацию в редакторе")
+            links = list((await session.execute(select(JobAsset, MediaAsset).join(MediaAsset, JobAsset.asset_id == MediaAsset.id).where(JobAsset.job_id == job.id,JobAsset.selected.is_(True)).order_by(JobAsset.sort_order))).all())
+        post = deserialize_post(current.post_data)
+        if current.content_kind == ContentKind.ARTWORK and not post.media_items:
+            raise ApplicationError("Выберите хотя бы одно изображение")
+        from app.application.prepared_media import load_prepared_media
+        try:prepared=load_prepared_media(plan,links,post,self.storage,job.channel.publish_mode)
+        except ValueError as error:raise ApplicationError("Подготовленный каталог медиа недоступен") from error
+        duplicate=await self.jobs.duplicate(current)
+        if duplicate and not current.allow_duplicate:
+            raise DuplicatePublicationError("Этот источник уже опубликован в канале")
+        if await self.jobs.is_cancelled(job.id):
+            await self.jobs.transition(job.id,JobStatus.CANCELLED);return
+        await self.jobs.transition(job.id,JobStatus.PUBLISHING)
+        current=await self.jobs.get(job.id)
+        result=await self.publisher.publish(current,post,prepared,current.channel,plan["html"])
+        try:
+            async with self.sessions() as session,session.begin():
+                session.add(Publication(job_id=job.id,channel_id=job.target_channel_id,telegram_chat_id=result.chat_id,telegram_message_ids=result.message_ids,published_at=result.published_at,caption=plan["html"]))
+                channel=await session.get(Channel,job.target_channel_id)
+                if channel:update_channel_schedule_after_publication(channel,job,result.published_at)
+                from app.application.scheduling import record_catchup_success
+                await record_catchup_success(session,current,result.published_at)
+            await self.jobs.transition(job.id,JobStatus.COMPLETED)
+        except Exception as error:
+            raise UncertainPublishError("Telegram подтвердил отправку, но запись истории не завершена; проверьте канал") from error
+        await self._notify(job,f"Задание #{job.id} успешно опубликовано в {job.channel.alias}.")
+
+    async def close_and_drain(self, migration_id: str) -> None:
+        # A migration closes permits before draining already accepted work.
+        if getattr(self.jobs, "gate", None):
+            self.jobs.gate.block("migration",migration_id)
+        await self.stop()
+
+    async def assert_quiesced(self) -> None:
+        if any(not task.done() for task in self.tasks):
+            raise RuntimeError("Publisher workers are still running")
 
     def snapshot(self) -> list[WorkerSnapshot]:
         now = time.monotonic()

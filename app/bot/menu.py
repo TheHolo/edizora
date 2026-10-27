@@ -9,6 +9,8 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     KeyboardButton,
     MenuButtonCommands,
+    MenuButtonWebApp,
+    WebAppInfo,
     ReplyKeyboardMarkup,
 )
 
@@ -64,6 +66,7 @@ COMMAND_CATALOG = (
     CommandHelp("channels", "/channels", "Показать каналы", "показывает зарегистрированные каналы и интервалы публикации.", "Каналы и источники"),
     CommandHelp("channel_interval", "/channel_interval <alias> <30s|15m|2h|1d|0>", "Изменить интервал канала", "задаёт интервал автопубликации; 0 отключает ожидание между постами.", "Каналы и источники"),
     CommandHelp("providers", "/providers", "Показать источники", "показывает поддерживаемые источники изображений.", "Каналы и источники"),
+    CommandHelp("models", "/models", "Выбрать модель LM Studio", "показывает модели LM Studio и сохраняет выбор кнопкой.", "Диагностика"),
     CommandHelp("stats", "/stats", "Показать статистику", "показывает текущую статистику заданий.", "Диагностика"),
     CommandHelp("health", "/health [full]", "Проверить здоровье бота", "без аргумента выполняет быструю проверку; full добавляет каналы, storage, размер БД и внешние providers.", "Диагностика"),
 )
@@ -76,9 +79,18 @@ def bot_commands() -> list[BotCommand]:
     ]
 
 
-async def configure_bot_ui(bot: Bot) -> None:
+async def configure_bot_ui(bot: Bot, *, panel_url: str | None = None) -> None:
+    if panel_url:
+        from urllib.parse import urlsplit
+        parsed=urlsplit(panel_url)
+        if parsed.scheme!="https" or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
+            raise ValueError("Telegram Mini App требует проверенный HTTPS-адрес панели без пароля и fragment")
     await bot.set_my_commands(bot_commands())
-    await bot.set_chat_menu_button(menu_button=MenuButtonCommands())
+    desired=MenuButtonWebApp(text="Открыть Publisher",web_app=WebAppInfo(url=panel_url)) if panel_url else MenuButtonCommands()
+    if panel_url:
+        current=await bot.get_chat_menu_button()
+        if isinstance(current,MenuButtonWebApp) and current.web_app.url==panel_url:return
+    await bot.set_chat_menu_button(menu_button=desired)
 
 
 def render_help() -> str:

@@ -1,0 +1,259 @@
+{
+  "counts": {
+    "installed": 32,
+    "locked": 69
+  },
+  "findings": [
+    {
+      "name": "aiohttp",
+      "version": "3.14.3",
+      "environments": [
+        "installed",
+        "locked"
+      ],
+      "vulns": [
+        {
+          "id": "GHSA-2g87-pp6c-29x5",
+          "modified": "2026-10-19T17:15:04.113194Z"
+        },
+        {
+          "id": "GHSA-494j-54xm-rwp3",
+          "modified": "2026-10-19T17:15:04.115639Z"
+        },
+        {
+          "id": "GHSA-5wr8-gcqf-gqf3",
+          "modified": "2026-10-19T17:15:04.139404Z"
+        },
+        {
+          "id": "GHSA-6cjc-53gc-5rqm",
+          "modified": "2026-10-20T20:15:05.286053Z"
+        },
+        {
+          "id": "GHSA-9xw5-w5jj-pvcg",
+          "modified": "2026-10-20T20:00:04.692319Z"
+        },
+        {
+          "id": "GHSA-f9xw-jh8m-3mwq",
+          "modified": "2026-10-20T20:15:05.218624Z"
+        },
+        {
+          "id": "GHSA-gx76-c99x-2c96",
+          "modified": "2026-10-20T20:15:05.188135Z"
+        },
+        {
+          "id": "GHSA-pqxq-w44r-73xw",
+          "modified": "2026-10-20T20:00:04.694820Z"
+        }
+      ]
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "environments": [
+        "installed",
+        "locked"
+      ],
+      "vulns": [
+        {
+          "id": "GHSA-6q48-6c7w-9gw2",
+          "modified": "2026-10-20T22:11:14.336568Z"
+        },
+        {
+          "id": "PYSEC-2026-4320",
+          "modified": "2026-10-20T22:00:02.600723Z"
+        }
+      ]
+    },
+    {
+      "name": "multidict",
+      "version": "6.7.1",
+      "environments": [
+        "installed",
+        "locked"
+      ],
+      "vulns": [
+        {
+          "id": "GHSA-54p9-h82j-f925",
+          "modified": "2026-10-15T14:56:05.601333Z"
+        },
+        {
+          "id": "PYSEC-2026-4244",
+          "modified": "2026-10-15T14:45:08.892406Z"
+        }
+      ]
+    },
+    {
+      "name": "pillow",
+      "version": "12.3.0",
+      "environments": [
+        "installed",
+        "locked"
+      ],
+      "vulns": [
+        {
+          "id": "GHSA-22hg-r758-rrw9",
+          "modified": "2026-10-21T20:45:04.649560Z"
+        },
+        {
+          "id": "GHSA-254f-3936-288h",
+          "modified": "2026-10-21T21:15:08.507283Z"
+        },
+        {
+          "id": "GHSA-27h8-gf7j-v5hc",
+          "modified": "2026-10-21T20:45:04.650633Z"
+        },
+        {
+          "id": "GHSA-332p-7hrc-92wf",
+          "modified": "2026-10-21T21:45:08.360916Z"
+        },
+        {
+          "id": "GHSA-4558-3h8r-v8xp",
+          "modified": "2026-10-21T20:15:04.190082Z"
+        },
+        {
+          "id": "GHSA-462x-pgg6-55fp",
+          "modified": "2026-10-20T21:00:04.394527Z"
+        },
+        {
+          "id": "GHSA-4rr5-89j8-mwwm",
+          "modified": "2026-10-21T21:45:08.356370Z"
+        },
+        {
+          "id": "GHSA-58r4-6rv3-gfh8",
+          "modified": "2026-10-20T21:00:04.401258Z"
+        },
+        {
+          "id": "GHSA-5xm2-6676-qcp9",
+          "modified": "2026-10-21T21:30:26.938404Z"
+        },
+        {
+          "id": "GHSA-65qm-jvmh-6pqg",
+          "modified": "2026-10-20T21:00:04.406280Z"
+        },
+        {
+          "id": "GHSA-74r2-7ff9-mjj2",
+          "modified": "2026-10-21T21:00:06.702560Z"
+        },
+        {
+          "id": "GHSA-7mwm-ghpf-9vrm",
+          "modified": "2026-10-21T20:15:04.188796Z"
+        },
+        {
+          "id": "GHSA-8g5g-8vmr-9782",
+          "modified": "2026-10-20T21:00:04.391412Z"
+        },
+        {
+          "id": "GHSA-c6hw-5grf-ff96",
+          "modified": "2026-10-20T21:00:04.387041Z"
+        },
+        {
+          "id": "GHSA-cp9v-662q-vvx9",
+          "modified": "2026-10-21T20:45:04.636143Z"
+        },
+        {
+          "id": "GHSA-f2g6-542v-9j58",
+          "modified": "2026-10-21T21:30:27.849961Z"
+        },
+        {
+          "id": "GHSA-fc9g-5qg7-mf45",
+          "modified": "2026-10-21T20:45:04.633756Z"
+        },
+        {
+          "id": "GHSA-gg2r-wvfm-q9rx",
+          "modified": "2026-10-21T21:30:26.946223Z"
+        },
+        {
+          "id": "GHSA-j4m9-6w36-pw47",
+          "modified": "2026-10-21T20:15:04.205713Z"
+        },
+        {
+          "id": "GHSA-jg86-v3jv-hrpm",
+          "modified": "2026-10-21T21:30:26.940437Z"
+        },
+        {
+          "id": "GHSA-p4wg-p73j-c528",
+          "modified": "2026-10-20T21:00:04.433571Z"
+        },
+        {
+          "id": "GHSA-pchr-8j38-3x4p",
+          "modified": "2026-10-20T21:00:04.410817Z"
+        },
+        {
+          "id": "GHSA-q45j-58j2-45rg",
+          "modified": "2026-10-20T21:00:04.414260Z"
+        },
+        {
+          "id": "GHSA-rfgq-q3w2-pmv2",
+          "modified": "2026-10-21T21:00:06.704034Z"
+        },
+        {
+          "id": "GHSA-vx6w-vv9f-6gvg",
+          "modified": "2026-10-20T21:00:04.428653Z"
+        },
+        {
+          "id": "GHSA-w889-685w-c8fh",
+          "modified": "2026-10-21T20:15:04.208518Z"
+        },
+        {
+          "id": "GHSA-xgh8-jp6q-p5x8",
+          "modified": "2026-10-21T21:00:06.700667Z"
+        },
+        {
+          "id": "GHSA-xvh5-g6gv-559v",
+          "modified": "2026-10-21T21:45:08.352742Z"
+        }
+      ]
+    },
+    {
+      "name": "pytest",
+      "version": "8.4.2",
+      "environments": [
+        "installed",
+        "locked"
+      ],
+      "vulns": [
+        {
+          "id": "GHSA-6w46-j5rx-g56g",
+          "modified": "2026-09-10T03:50:32.768043Z"
+        },
+        {
+          "id": "PYSEC-2026-1845",
+          "modified": "2026-07-07T17:47:51.848748Z"
+        }
+      ]
+    },
+    {
+      "name": "urllib3",
+      "version": "2.7.0",
+      "environments": [
+        "locked"
+      ],
+      "vulns": [
+        {
+          "id": "GHSA-8988-9cw3-xx77",
+          "modified": "2026-10-01T17:55:53.793608Z"
+        },
+        {
+          "id": "GHSA-gh4c-6fx4-qh6g",
+          "modified": "2026-10-01T17:55:40.608255Z"
+        },
+        {
+          "id": "GHSA-vxq7-64xx-v4gw",
+          "modified": "2026-10-01T17:55:57.514829Z"
+        },
+        {
+          "id": "PYSEC-2026-4175",
+          "modified": "2026-10-01T17:45:18.542387Z"
+        },
+        {
+          "id": "PYSEC-2026-4176",
+          "modified": "2026-10-01T17:45:18.545924Z"
+        },
+        {
+          "id": "PYSEC-2026-4177",
+          "modified": "2026-10-01T17:45:18.336090Z"
+        }
+      ]
+    }
+  ]
+}

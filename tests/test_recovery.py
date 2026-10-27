@@ -12,6 +12,8 @@ async def test_existing_database_gets_additive_columns(tmp_path):
     engine, _ = create_database(f"sqlite+aiosqlite:///{tmp_path / 'migration.db'}")
     await create_schema(engine)
     async with engine.begin() as connection:
+        # A real pre-web schema has no version journal.
+        await connection.execute(text("DROP TABLE schema_migrations"))
         await connection.execute(text("DROP INDEX ix_channels_active_job_id"))
         await connection.execute(text("ALTER TABLE channels DROP COLUMN active_job_id"))
         await connection.execute(text("ALTER TABLE channels DROP COLUMN is_paused"))
@@ -65,6 +67,8 @@ async def test_startup_migrates_legacy_queued_exact_times_to_scheduled(tmp_path)
         session.add(job)
         await session.flush()
         job_id = job.id
+    async with engine.begin() as connection:
+        await connection.execute(text("DROP TABLE schema_migrations"))
 
     await create_schema(engine)
 

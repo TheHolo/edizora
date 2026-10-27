@@ -1,5 +1,4 @@
-from dataclasses import replace
-
+from app.domain.album import initialize_album
 from app.domain.exceptions import InvalidMediaSelectionError, TooManyMediaError
 from app.domain.models import SourcePost
 from app.providers.registry import ProviderRegistry
@@ -60,21 +59,9 @@ class IngestService:
                     f"В публикации {provider_title} всего {total} изображений; "
                     f"номера {missing_text} отсутствуют."
                 )
-            post.media_items = [
-                replace(post.media_items[number - 1], order=order)
-                for order, number in enumerate(selected_numbers)
-            ]
-            post.metadata = {
-                **post.metadata,
-                "original_media_count": total,
-                "selected_media_numbers": list(selected_numbers),
-            }
-
-        selected_count = len(post.media_items)
-        if self.media_limit_enabled and selected_count > self.max_images:
-            raise TooManyMediaError(
-                f"В публикации {provider_title} {selected_count} изображений. "
-                f"Допустимый максимум — {self.max_images}. "
-                "Укажите нужные номера после ссылки, например [1,3,5-7]."
-            )
+        automatic = selected_numbers is None and self.media_limit_enabled and total > self.max_images
+        selection = list(selected_numbers) if selected_numbers is not None else list(
+            range(1, min(total, self.max_images) + 1 if self.media_limit_enabled else total + 1)
+        )
+        initialize_album(post, selection, automatic=automatic)
         return post

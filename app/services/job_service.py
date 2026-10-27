@@ -5,11 +5,13 @@ from datetime import datetime, timedelta
 from sqlalchemy import and_, case, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.exc import StaleDataError
 from sqlalchemy.sql import ColumnElement
 
-from app.db.models import Channel, Job, JobEvent, Publication, User, utcnow
+from app.db.models import Channel, Job, JobEvent, Publication, User, ApplicationState, CommandReceipt, utcnow
 from app.domain.enums import ACTIVE_JOB_STATUSES, ContentKind, JobStatus
 from app.domain.models import MediaItem, SourcePost
+from app.services.translation_service import TRANSLATION_FIELDS
 
 QUEUE_FILTER_STATUSES = {
     "active": ACTIVE_JOB_STATUSES,
@@ -30,6 +32,7 @@ class BulkRetryResult:
 
 def serialize_post(post: SourcePost) -> dict:
     return {
+        "schema_version": 1,
         "content_kind": post.content_kind.value,
         "provider": post.provider,
         "source_id": post.source_id,
@@ -67,8 +70,9 @@ def _serialize_media_item(item: MediaItem) -> dict:
 
 
 class JobService:
-    def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(self, sessions: async_sessionmaker[AsyncSession], *, gate=None) -> None:
         self.sessions = sessions
+        self.gate = gate
 
     async def ensure_user(self, telegram_id: int, username: str | None, display_name: str) -> User:
         async with self.sessions() as session, session.begin():
@@ -156,7 +160,8 @@ class JobService:
             channel = await session.get(Channel, channel_id)
             if channel is None or not channel.is_enabled:
                 return None
-            await session.execute(update(Channel).values(is_default=False))
+            for other in (await session.scalars(select(Channel).where(Channel.id!=channel.id,Channel.is_default.is_(True)))).all():
+                other.is_default=False
             channel.is_default = True
             return channel
 
@@ -164,7 +169,16 @@ class JobService:
         self, user_id: int, post: SourcePost, channel_id: int, tags: list[str], max_attempts: int,
         caption_override: str | None = None,
     ) -> Job:
+        if self.gate:self.gate.assert_mutation_allowed()
         async with self.sessions() as session, session.begin():
+            from app.bot.durable import current_update
+            import hashlib
+            identity=current_update.get()
+            scope="telegram:preview:"+hashlib.sha256((post.provider+":"+post.source_id).encode()).hexdigest()[:40]
+            receipt_key=str(identity) if identity else None
+            if receipt_key:
+                receipt=await session.scalar(select(CommandReceipt).where(CommandReceipt.principal_id==user_id,CommandReceipt.scope==scope,CommandReceipt.key==receipt_key))
+                if receipt:return await session.get(Job,receipt.result["job_id"])
             job = Job(
                 created_by_user_id=user_id,
                 provider=post.provider,
@@ -185,6 +199,7 @@ class JobService:
             if user:
                 user.last_selected_channel_id = channel_id
             await session.flush()
+            if receipt_key:session.add(CommandReceipt(principal_id=user_id,scope=scope,key=receipt_key,payload_hash="telegram",result={"job_id":job.id}))
             return job
 
     async def set_caption_override(self, job_id: int, caption: str | None) -> Job | None:
@@ -205,18 +220,45 @@ class JobService:
     async def set_post_field(self, job_id: int, field: str, value: str) -> Job | None:
         if field not in {"title", "description", "body"}:
             raise ValueError(f"Unsupported post field: {field}")
+        job = await self.get(job_id)
+        if not job or job.status != JobStatus.WAITING_CONFIRMATION:
+            return None
+        post_data = dict(job.post_data)
+        post_data[field] = value
+        if field == "title":
+            metadata = dict(post_data.get("metadata", {}))
+            for key in TRANSLATION_FIELDS:
+                metadata.pop(key, None)
+            post_data["metadata"] = metadata
+        return await self.replace_draft_post(job, post_data)
+
+    async def replace_draft_post(self, snapshot: Job, post_data: dict) -> Job | None:
+        """Compare-and-swap: stale editor actions must not overwrite newer edits or a queued job."""
         async with self.sessions() as session, session.begin():
-            job = await session.get(Job, job_id)
-            if not job or job.status != JobStatus.WAITING_CONFIRMATION:
-                return None
-            post_data = dict(job.post_data)
-            post_data[field] = value
-            if field == "title":
-                metadata = dict(post_data.get("metadata", {}))
-                metadata.pop("title_translation", None)
-                post_data["metadata"] = metadata
-            job.post_data = post_data
-            return job
+            result = await session.execute(
+                update(Job).where(
+                    Job.id == snapshot.id, Job.status == JobStatus.WAITING_CONFIRMATION,
+                    Job.version == snapshot.version,
+                ).values(post_data=post_data, updated_at=utcnow(), version=Job.version + 1, render_plan=None)
+            )
+            changed = result.rowcount == 1
+        return await self.get(snapshot.id) if changed else None
+
+    async def save_title_translation(self, job_id: int, title: str, metadata: dict) -> None:
+        for _ in range(2):
+            job = await self.get(job_id)
+            if not job or job.status != JobStatus.WAITING_CONFIRMATION or job.post_data.get("title") != title:
+                return
+            data = dict(job.post_data)
+            merged = dict(data.get("metadata", {}))
+            for key in TRANSLATION_FIELDS:
+                if key in metadata:
+                    merged[key] = metadata[key]
+            if merged == data.get("metadata", {}):
+                return
+            data["metadata"] = merged
+            if await self.replace_draft_post(job, data) is not None:
+                return
 
     async def add_media(
         self, job_id: int, item: MediaItem, *, replace: bool = False, limit: int = 10,
@@ -291,10 +333,30 @@ class JobService:
             return job
 
     async def enqueue(self, job_id: int) -> bool:
+        platform=getattr(self,"platform",None)
+        if self.gate and platform:
+            from uuid import uuid4
+            from app.application.platform import PlatformError
+            job=await self.get(job_id)
+            if not job:return False
+            try:
+                await platform.publication_action(job.created_by_user_id,job.id,"retry" if job.status==JobStatus.FAILED else "enqueue",{"expected_version":job.version},str(uuid4()))
+                return True
+            except PlatformError:return False
         async with self.sessions() as session, session.begin():
             job = await session.get(Job, job_id)
             if not job or job.status not in {JobStatus.WAITING_CONFIRMATION, JobStatus.FAILED}:
                 return False
+            if job.content_kind == ContentKind.ARTWORK and not job.post_data.get("media_items"):
+                return False
+            # Reserve the exact version validated above before changing its queue state.
+            reserved = await session.execute(
+                update(Job).where(Job.id == job.id, Job.updated_at == job.updated_at, Job.status == job.status)
+                .values(updated_at=utcnow()).execution_options(synchronize_session=False)
+            )
+            if reserved.rowcount != 1:
+                return False
+            await session.refresh(job)
             if job.status == JobStatus.FAILED:
                 job.attempts = 0
                 job.scheduled_at = None
@@ -313,7 +375,18 @@ class JobService:
             return True
 
     async def claim_next(self) -> Job | None:
+        if self.gate:
+            try:
+                self.gate.assert_publication_allowed()
+            except RuntimeError:
+                return None
         async with self.sessions() as session, session.begin():
+            state = await session.get(ApplicationState, 1)
+            if state and (state.publication_blocks or state.maintenance_state != "normal"):
+                return None
+            from app.application.scheduling import apply_overdue_in_session
+            await apply_overdue_in_session(session)
+            await session.flush()
             while True:
                 now = utcnow()
                 candidate = await session.execute(
@@ -321,6 +394,7 @@ class JobService:
                     .join(Channel, Job.target_channel_id == Channel.id)
                     .where(
                         Job.status.in_({JobStatus.QUEUED, JobStatus.SCHEDULED}),
+                        or_(self.gate is None,Job.render_plan["job_version"].as_integer().is_not(None)),
                         Job.cancel_requested.is_(False),
                         or_(Job.next_attempt_at.is_(None), Job.next_attempt_at <= now),
                         Channel.is_enabled.is_(True),
@@ -370,7 +444,7 @@ class JobService:
                     update(Job)
                     .where(Job.id == candidate_id, Job.status == candidate_status)
                     .values(
-                        status=JobStatus.DOWNLOADING, attempts=Job.attempts + 1,
+                        status=JobStatus.DOWNLOADING, version=Job.version + 1, attempts=Job.attempts + 1,
                         started_at=func.coalesce(Job.started_at, utcnow()), next_attempt_at=None,
                     )
                     .returning(Job.id)
@@ -387,6 +461,16 @@ class JobService:
                 )
 
     async def force_publish(self, job_id: int) -> Job | None:
+        platform=getattr(self,"platform",None)
+        if self.gate and platform:
+            from uuid import uuid4
+            from app.application.platform import PlatformError
+            job=await self.get(job_id)
+            if not job:return None
+            try:
+                await platform.publication_action(job.created_by_user_id,job.id,"publish-now",{"expected_version":job.version},str(uuid4()))
+                return await self.get(job_id)
+            except PlatformError:return None
         async with self.sessions() as session, session.begin():
             job = await session.get(Job, job_id)
             if (
@@ -406,6 +490,12 @@ class JobService:
             return job
 
     async def force_next_publish(self, channel_id: int | None = None) -> Job | None:
+        if self.gate and getattr(self,"platform",None):
+            async with self.sessions() as session:
+                query=select(Job.id).join(Channel,Job.target_channel_id==Channel.id).where(Job.status==JobStatus.QUEUED,Job.scheduled_at.is_(None),Job.cancel_requested.is_(False),Channel.is_enabled.is_(True))
+                if channel_id is not None:query=query.where(Job.target_channel_id==channel_id)
+                job_id=await session.scalar(query.order_by(Job.queue_position.is_(None),Job.queue_position,Job.created_at,Job.id).limit(1))
+            return await self.force_publish(job_id) if job_id else None
         async with self.sessions() as session, session.begin():
             candidate = (
                 select(Job.id)
@@ -481,6 +571,16 @@ class JobService:
                 job.finished_at = utcnow()
             await self._release_channel(session, job)
 
+    async def defer(self,job_id: int) -> None:
+        """A closed permit before the first send is a pause, not a failed attempt."""
+        async with self.sessions() as session,session.begin():
+            job=await session.get(Job,job_id)
+            if not job or job.status not in {JobStatus.DOWNLOADING,JobStatus.PROCESSING,JobStatus.PUBLISHING}:return
+            job.status=JobStatus.SCHEDULED if job.scheduled_at else JobStatus.QUEUED
+            job.attempts=max(0,job.attempts-1)
+            job.error_code=job.error_message=None
+            await self._release_channel(session,job)
+
     async def change_channel(self, job_id: int, channel_id: int) -> Channel | None:
         async with self.sessions() as session, session.begin():
             job = await session.get(Job, job_id)
@@ -504,6 +604,10 @@ class JobService:
                 return None
             old_status = job.status
             job.scheduled_at = scheduled_at
+            metadata=dict(job.post_data.get("metadata",{}))
+            for key in ("overdue_hold","overdue_catchup","overdue_policy_applied"):metadata.pop(key,None)
+            job.post_data={**job.post_data,"metadata":metadata}
+            job.next_attempt_at=None
             if scheduled_at is not None:
                 job.force_publish = False
                 if job.status == JobStatus.QUEUED:
@@ -617,10 +721,29 @@ class JobService:
             return "active" if active_job_id is not None else None
 
     async def allow_duplicate_and_enqueue(self, job_id: int) -> bool:
+        platform=getattr(self,"platform",None)
+        if self.gate and platform:
+            from uuid import uuid4
+            from app.application.platform import PlatformError
+            job=await self.get(job_id)
+            if not job:return False
+            try:
+                await platform.publication_action(job.created_by_user_id,job.id,"enqueue",{"expected_version":job.version,"confirm_duplicate":True},str(uuid4()))
+                return True
+            except PlatformError:return False
         async with self.sessions() as session, session.begin():
             job = await session.get(Job, job_id)
             if not job or job.status != JobStatus.WAITING_CONFIRMATION:
                 return False
+            if job.content_kind == ContentKind.ARTWORK and not job.post_data.get("media_items"):
+                return False
+            reserved = await session.execute(
+                update(Job).where(Job.id == job.id, Job.updated_at == job.updated_at, Job.status == job.status)
+                .values(updated_at=utcnow()).execution_options(synchronize_session=False)
+            )
+            if reserved.rowcount != 1:
+                return False
+            await session.refresh(job)
             job.allow_duplicate = True
             job.status = (
                 JobStatus.SCHEDULED if job.scheduled_at is not None else JobStatus.QUEUED
@@ -839,3 +962,20 @@ class JobService:
             last_published + timedelta(seconds=seconds)
             if last_published and seconds else None
         )
+
+
+# Managed clients share the same global maintenance barrier. Legacy constructors
+# remain usable for isolated old-suite adapters without granting managed authority.
+def _guard_mutation(method):
+    from functools import wraps
+    @wraps(method)
+    async def guarded(self,*args,**kwargs):
+        if self.gate:self.gate.assert_mutation_allowed()
+        try:return await method(self,*args,**kwargs)
+        except StaleDataError as error:
+            from app.domain.exceptions import VersionConflictError
+            raise VersionConflictError("Публикация уже изменилась в другом интерфейсе. Откройте её снова и сверьте правки.") from error
+    return guarded
+
+for _name in ("ensure_user","set_channel_interval","set_channel_interval_by_id","set_channel_paused","set_default_channel","create_preview","set_caption_override","set_post_field","replace_draft_post","save_title_translation","add_media","remove_media","clear_media","enqueue","force_publish","force_next_publish","request_cancel","change_channel","set_schedule","shuffle_queued","move_queued","allow_duplicate_and_enqueue","cancel_filtered","retry_failed"):
+    setattr(JobService,_name,_guard_mutation(getattr(JobService,_name)))

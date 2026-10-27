@@ -3,17 +3,21 @@ from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
+from uuid import uuid5,NAMESPACE_URL
+import asyncio
 
 from app.db.models import Job
 from app.domain.enums import ContentKind, MediaType
+from app.domain.exceptions import MediaValidationError
 from app.domain.models import MediaItem, PreparedMedia, SourcePost
 from app.services.caption_service import DEFAULT_TEMPLATE, CaptionService
 from app.services.download_service import DownloadService
 from app.services.media_service import MediaService
+from app.services.job_service import JobService
 from app.services.news_render_service import NewsRenderService
 from app.services.publisher_service import TelegramPublisher
 from app.services.translation_service import TranslationService
-from app.utils.tags import merge_tags
+from app.utils.tags import publication_tags
 
 
 def deserialize_post(data: dict) -> SourcePost:
@@ -27,7 +31,7 @@ def deserialize_post(data: dict) -> SourcePost:
         body=data.get("body", ""),
         content_warning=data.get("content_warning"),
         published_at=datetime.fromisoformat(data["published_at"]) if data.get("published_at") else None,
-        metadata=data.get("metadata", {}),
+        metadata=dict(data.get("metadata", {})),
     )
 
 
@@ -37,12 +41,14 @@ class PreviewService:
         publisher: TelegramPublisher, storage: Path, auto_add_source_tags: bool,
         max_tags: int, max_tag_length: int, translator: TranslationService,
         news_renderer: NewsRenderService | None = None,
+        jobs: JobService | None = None,
     ) -> None:
         self.downloader = downloader
         self.media = media
         self.captions = captions
         self.publisher = publisher
         self.translator = translator
+        self.jobs = jobs
         self.news_renderer = news_renderer or NewsRenderService()
         self.storage = storage
         self.auto_add_source_tags = auto_add_source_tags
@@ -50,9 +56,13 @@ class PreviewService:
         self.max_tag_length = max_tag_length
 
     async def send(self, job: Job, chat_id: int | str) -> None:
+        if self.jobs is not None and getattr(self.jobs,"gate",None):
+            return await self._managed_send(job,chat_id)
         post = deserialize_post(job.post_data)
         if post.content_kind == ContentKind.ARTWORK:
-            await self.translator.enrich_title(post)
+            if not post.media_items:
+                raise MediaValidationError("Выберите хотя бы одно изображение в редакторе альбома.")
+            await self._enrich_title(job, post)
         temporary_id = f"preview-{job.id}-{uuid4().hex}"
         try:
             prepared: list[PreparedMedia] = []
@@ -81,10 +91,52 @@ class PreviewService:
             shutil.rmtree(self.storage / "jobs" / temporary_id, ignore_errors=True)
 
     async def caption(self, job: Job) -> str:
+        if self.jobs is not None and getattr(self.jobs,"gate",None):
+            platform=getattr(self.jobs,"platform",None)
+            if platform is None:
+                raise MediaValidationError("Управляемая панель ещё не готова; повторите после запуска runtime")
+            return (await platform.preview(job.created_by_user_id,job.id))["html"]
         post = deserialize_post(job.post_data)
         if post.content_kind == ContentKind.ARTWORK:
-            await self.translator.enrich_title(post)
+            await self._enrich_title(job, post)
         return self._build_caption(job, post)
+
+    async def _managed_send(self,job,chat_id):
+        """Telegram is a client of the same persisted preparation and preview commands."""
+        platform=getattr(self.jobs,"platform",None)
+        if platform is None:
+            raise MediaValidationError("Управляемая панель ещё не готова; повторите после запуска runtime")
+        from app.bot.durable import current_update
+        identity=current_update.get()
+        def command_key(stage):
+            return str(uuid5(NAMESPACE_URL,f"publisher:{identity}:{job.id}:{chat_id}:{stage}")) if identity else str(uuid4())
+        dto=await platform.get_publication(job.created_by_user_id,job.id)
+        if not dto["readiness"]["ready"]:
+            if dto["status"]!="waiting_confirmation":
+                raise MediaValidationError("Верните публикацию в черновик и подготовьте медиа в панели")
+            prepared=await platform.publication_action(job.created_by_user_id,job.id,"prepare",{"expected_version":dto["version"]},command_key("prepare"))
+            await self._await_operation(platform,job.created_by_user_id,prepared["operation_id"])
+            dto=await platform.get_publication(job.created_by_user_id,job.id)
+        if not hasattr(platform,"prepare"):
+            raise MediaValidationError("Общий сервис предпросмотра ещё не настроен")
+        operation=await platform.prepare(job.created_by_user_id,job.id,"preview-in-telegram",{"expected_version":dto["version"]},command_key("telegram-preview"))
+        await self._await_operation(platform,job.created_by_user_id,operation["operation_id"])
+
+    async def _await_operation(self,platform,actor_id,operation_id):
+        deadline=asyncio.get_running_loop().time()+180
+        while True:
+            operation=await platform.operation(actor_id,operation_id)
+            if operation["status"]=="succeeded":return operation
+            if operation["status"] in {"failed","cancelled","waiting_user"}:
+                raise MediaValidationError(operation.get("message") or "Операция требует проверки в панели")
+            if asyncio.get_running_loop().time()>=deadline:
+                raise MediaValidationError(f"Операция {operation_id} продолжает выполняться. Откройте панель: закрытие чата её не отменяет.")
+            await asyncio.sleep(.25)
+
+    async def _enrich_title(self, job: Job, post: SourcePost) -> None:
+        await self.translator.enrich_title(post)
+        if self.jobs is not None:
+            await self.jobs.save_title_translation(job.id, post.title, post.metadata)
 
     def validate_custom_caption(self, value: str) -> None:
         self.captions.build_custom(value)
@@ -94,19 +146,11 @@ class PreviewService:
             self.news_renderer.validate_custom(value)
             return
         post = deserialize_post(job.post_data)
-        tags = job.user_tags
-        if self.auto_add_source_tags:
-            tags = merge_tags(
-                job.user_tags, job.source_tags, self.max_tags, self.max_tag_length,
-            )
+        tags = self._tags(job)
         self.news_renderer.build_custom(value, post, tags)
 
     def _build_caption(self, job: Job, post: SourcePost) -> str:
-        caption_tags = job.user_tags
-        if self.auto_add_source_tags:
-            caption_tags = merge_tags(
-                job.user_tags, job.source_tags, self.max_tags, self.max_tag_length,
-            )
+        caption_tags = self._tags(job)
         caption_override = getattr(job, "caption_override", None)
         if caption_override is not None:
             if post.content_kind == ContentKind.NEWS:
@@ -115,3 +159,9 @@ class PreviewService:
         if post.content_kind == ContentKind.NEWS:
             return self.news_renderer.build(post, caption_tags)
         return self.captions.build(post, caption_tags, job.channel.caption_template or DEFAULT_TEMPLATE)
+
+    def _tags(self, job: Job) -> list[str]:
+        return publication_tags(
+            job.user_tags, job.source_tags, getattr(job.channel, "default_tags", None),
+            include_source=self.auto_add_source_tags, max_tags=self.max_tags, max_length=self.max_tag_length,
+        )

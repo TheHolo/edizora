@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sqlalchemy import inspect, text
+from sqlalchemy import inspect, text, event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -17,13 +17,24 @@ def create_database(url: str) -> tuple[AsyncEngine, async_sessionmaker[AsyncSess
         if path and path != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
     engine = create_async_engine(url, pool_pre_ping=True)
+    if url.startswith("sqlite"):
+        @event.listens_for(engine.sync_engine, "connect")
+        def configure_sqlite(dbapi_connection, record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.execute("PRAGMA busy_timeout=10000")
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.close()
     return engine, async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def create_schema(engine: AsyncEngine) -> None:
+    from app.db.migrations import backup_before_upgrade, upgrade
+    backup_before_upgrade(engine.url)
     async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
-        await connection.run_sync(_upgrade_schema)
+        if engine.dialect.name == "sqlite":
+            await connection.execute(text("BEGIN IMMEDIATE"))
+        await connection.run_sync(upgrade)
 
 
 def _upgrade_schema(connection) -> None:
@@ -32,6 +43,8 @@ def _upgrade_schema(connection) -> None:
     if "last_selected_channel_id" not in user_columns:
         connection.execute(text("ALTER TABLE users ADD COLUMN last_selected_channel_id INTEGER NULL"))
     columns = {column["name"] for column in inspect(connection).get_columns("channels")}
+    if "default_tags" not in columns:
+        connection.execute(text("ALTER TABLE channels ADD COLUMN default_tags JSON NOT NULL DEFAULT '[]'"))
     if "publish_interval_seconds" not in columns:
         connection.execute(text("ALTER TABLE channels ADD COLUMN publish_interval_seconds INTEGER NOT NULL DEFAULT 0"))
     if "next_publish_at" not in columns:

@@ -133,6 +133,7 @@ def build_news_router(
     router = Router(name="news")
     pending_forwarded_albums: dict[tuple[int, int, str], _PendingForwardedAlbum] = {}
     forwarded_album_tasks: set[asyncio.Task[None]] = set()
+    router.forwarded_album_tasks = forwarded_album_tasks
 
     async def queue_request(
         message: Message, request: NewsSourceRequest, *, extra_payload: dict | None = None,

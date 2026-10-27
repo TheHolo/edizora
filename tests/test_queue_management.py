@@ -145,6 +145,7 @@ async def test_preview_with_exact_time_enters_scheduled_status_on_confirmation(t
     engine, sessions, user_id, channel_id = await create_context(tmp_path, "preview-schedule.db")
     async with sessions() as session, session.begin():
         preview = queued_job(user_id, channel_id, "preview", 1)
+        preview.post_data = {"media_items": [{"url": "https://example.com/a.jpg", "filename": "a.jpg", "order": 0}]}
         preview.status = JobStatus.WAITING_CONFIRMATION
         preview.queue_position = None
         session.add(preview)

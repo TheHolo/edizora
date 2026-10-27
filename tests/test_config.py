@@ -1,4 +1,16 @@
+import pytest
+from pydantic import ValidationError
+
 from app.config import Settings
+
+
+@pytest.mark.parametrize("channel", [
+    {}, {"chat_id": ""}, {"chat_id": True}, {"chat_id": "-1001", "publish_mode": []},
+    {"chat_id": "-1001", "publish_interval_seconds": -1}, {"chat_id": "-1001", "enabled": "false"},
+])
+def test_bad_channel_settings_fail_before_database_startup(channel):
+    with pytest.raises(ValidationError):
+        Settings(_config_file="missing.toml", _env_file=None, bot_token="test", channels_json={"art": channel})
 
 
 def test_comma_separated_admin_ids(monkeypatch):

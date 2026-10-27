@@ -56,6 +56,7 @@ async def test_news_api_authenticates_and_returns_worker_contract():
         lease_seconds=3600,
         source_types=["website", "youtube"],
         model_name="gemma4:12b",
+        use_worker_model=False,
     )
 
 

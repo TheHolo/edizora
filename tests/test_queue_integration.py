@@ -4,7 +4,7 @@ from datetime import timedelta
 from app.db.models import Channel, Job, Publication, User, utcnow
 from app.db.session import create_database, create_schema
 from app.domain.enums import JobStatus
-from app.domain.models import SourcePost
+from app.domain.models import MediaItem, SourcePost
 from app.services.job_service import JobService
 from app.utils.queue_schedule import next_queued_by_schedule
 
@@ -262,7 +262,7 @@ async def test_caption_override_can_be_changed_before_and_after_enqueue(tmp_path
     post = SourcePost(
         provider="direct", source_id="caption", source_url="https://x/a.jpg",
         normalized_url="https://x/a.jpg", title="A", author_name="Unknown",
-        author_url="https://x", media_items=[],
+        author_url="https://x", media_items=[MediaItem(url="https://x/a.jpg", filename="a.jpg", order=0)],
     )
     jobs = JobService(sessions)
     job = await jobs.create_preview(user_id, post, channel_id, [], 3)

@@ -12,6 +12,8 @@ max_urls_per_message = 10
 auto_add_source_tags = true
 auto_translate_titles = true
 translation_timeout = 5
+translation_lmstudio_timeout = 60
+translation_fallback_mymemory = true
 
 pixiv_media_limit_enabled = true
 pixiv_max_images = 10
@@ -24,7 +26,15 @@ news_api_port = 8091
 news_task_lease_seconds = 1800
 news_model_name = "gemma4:12b"
 
-# Copy and uncomment this section on the home computer. Keep its token in .env.
+# Local mode reads the model ID from .env and synchronizes bot + worker automatically.
+# Optional tuning; set LM Studio's loaded model context to at least this size.
+# [home_worker]
+# lmstudio_context_length = 8192
+# lmstudio_max_predict_tokens = 1600
+# lmstudio_timeout_seconds = 600
+# temperature = 0.1
+
+# Alternative: standalone worker with Ollama. Keep its token in .env.
 # [home_worker]
 # vps_api_url = "http://127.0.0.1:8091"
 # ollama_base_url = "http://127.0.0.1:11434"

@@ -52,15 +52,15 @@ async def test_non_ascii_title_is_enriched_with_translation():
     assert post.metadata["title_language"] == "ja"
 
 
-async def test_ascii_title_does_not_call_translation_api():
+async def test_ascii_foreign_title_is_also_translated():
     service = TranslationService(AsyncMock())
-    service.translate_to_english = AsyncMock()
-    post = make_post("Autumn landscape")
+    service.translate_to_english = AsyncMock(return_value=("The night", "fr"))
+    post = make_post("La nuit")
 
     await service.enrich_title(post)
 
-    service.translate_to_english.assert_not_awaited()
-    assert "title_translation" not in post.metadata
+    service.translate_to_english.assert_awaited_once_with("La nuit")
+    assert post.metadata["title_translation"] == "The night"
 
 
 async def test_translation_response_is_decoded_and_cached():

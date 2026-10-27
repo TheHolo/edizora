@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import replace
 from datetime import datetime
 from typing import Protocol
@@ -17,7 +18,7 @@ from app.news.models import (
     NewsSourceRequest,
     ProgressCallback,
 )
-from app.news.ollama_client import OllamaNewsClient
+from app.news.structured_client import StructuredNewsClient
 from app.news.vps_client import VpsNewsApiClient
 from app.news.worker_errors import LeaseLostError, VpsApiError, VpsAuthenticationError
 from app.news.worker_models import NewsDraft, NewsTask, ProgressStage, WorkerResult
@@ -40,15 +41,21 @@ class HomeNewsWorker:
         *,
         api: VpsNewsApiClient,
         extractor: NewsExtractor,
-        ollama: OllamaNewsClient,
+        ollama: StructuredNewsClient | None,
         poll_interval_seconds: float = 5,
+        ready: Callable[[], Awaitable[bool]] | None = None,
     ) -> None:
         self.api = api
         self.extractor = extractor
         self.ollama = ollama
         self.poll_interval_seconds = poll_interval_seconds
+        self.ready = ready
 
     async def run_once(self) -> bool:
+        if self.ready is not None and not await self.ready():
+            return False
+        if self.ollama is None:
+            return False
         task = await self.api.lease()
         if task is None:
             return False
@@ -117,6 +124,9 @@ class HomeNewsWorker:
             await asyncio.gather(work, heartbeat, return_exceptions=True)
 
     async def _execute(self, task: NewsTask, progress: _TaskProgress) -> None:
+        llm = self.ollama
+        if llm is None:
+            raise RuntimeError("Локальная модель не выбрана")
         first_stage = (
             ProgressStage.EXTRACTING_CONTENT
             if task.input_payload.kind is NewsSourceKind.MANUAL
@@ -128,9 +138,9 @@ class HomeNewsWorker:
 
         await progress.report(
             ProgressStage.LLM_PROCESSING,
-            f"Локальная модель {self.ollama.model} создаёт черновик",
+            f"Локальная модель {llm.model} создаёт черновик",
         )
-        draft = await self.ollama.rewrite(source)
+        draft = await llm.rewrite(source)
 
         await progress.report(
             ProgressStage.VALIDATING,

@@ -41,7 +41,8 @@ async def test_unsupported_decoded_format_is_rejected(tmp_path):
     source = MediaItem(url="https://example.com/disguised.jpg", filename="disguised.jpg", order=0)
     downloaded = DownloadedMedia(source, source_path, "image/jpeg", source_path.stat().st_size)
 
-    with pytest.raises(MediaValidationError, match="BMP"):
+    # Unsupported decoders must not run merely to determine their format name.
+    with pytest.raises(MediaValidationError, match="формат"):
         await MediaService().prepare(downloaded, "auto")
 
 

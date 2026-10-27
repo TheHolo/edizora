@@ -18,7 +18,19 @@ class LeaseLostError(VpsApiError):
     """The task was cancelled, reassigned, or its lease expired."""
 
 
-class OllamaError(HomeWorkerError):
+class LlmError(HomeWorkerError):
+    pass
+
+
+class TransientLlmError(LlmError):
+    retryable = True
+
+
+class LlmOutputError(TransientLlmError):
+    pass
+
+
+class OllamaError(LlmError):
     pass
 
 

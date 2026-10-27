@@ -1,0 +1,4 @@
+# Shell scripts must stay executable by Linux shells after checkout.
+*.sh text eol=lf
+# A patch uses a single space for empty context lines; preserve that format.
+*.patch -whitespace

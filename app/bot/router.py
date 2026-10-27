@@ -46,6 +46,7 @@ from app.bot.menu import (
 from app.bot.news_ui import news_preview_keyboard, news_task_keyboard
 from app.bot.states import CreatePublication, EditPreview, ManageChannel, ManageQueue
 from app.db.models import Channel, Job
+from app.domain.album import read_album
 from app.domain.enums import ACTIVE_JOB_STATUSES, ContentKind, JobStatus
 from app.domain.exceptions import ApplicationError, UnsupportedSourceError
 from app.domain.models import SourcePost
@@ -72,8 +73,8 @@ from app.utils.queue_schedule import (
     next_queued_by_schedule,
     regular_queue_completion,
 )
-from app.utils.tags import hashtags, merge_tags, normalize_tags
-from app.utils.text import provider_label
+from app.utils.tags import hashtags, merge_tags, normalize_tags, publication_tags
+from app.utils.text import provider_label, telegram_html_length
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +119,7 @@ def preview_keyboard(job_id: int) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(
             text="🕒 Назначить время", callback_data=f"schedule:{job_id}",
         )],
+        [InlineKeyboardButton(text="🗂 Редактор альбома", callback_data=f"album_open:{job_id}")],
         [InlineKeyboardButton(text="Показать медиа", callback_data=f"media:{job_id}")],
         [InlineKeyboardButton(text="Отмена", callback_data=f"cancel:{job_id}")],
     ])
@@ -422,10 +424,12 @@ def build_router(
 ) -> Router:
     router = Router()
 
-    def effective_tags(user_tags: list[str], source_tags: list[str]) -> list[str]:
-        if not settings.auto_add_source_tags:
-            return user_tags
-        return merge_tags(user_tags, source_tags, settings.max_tags, settings.max_tag_length)
+    def effective_tags(user_tags: list[str], source_tags: list[str], channel: Channel) -> list[str]:
+        return publication_tags(
+            user_tags, source_tags, getattr(channel, "default_tags", None),
+            include_source=settings.auto_add_source_tags,
+            max_tags=settings.max_tags, max_length=settings.max_tag_length,
+        )
 
     def is_news_job(job: Job) -> bool:
         value = getattr(job, "content_kind", job.post_data.get("content_kind", "artwork"))
@@ -496,6 +500,7 @@ def build_router(
             f"Ближайшая публикация: {nearest_text}\n"
             f"Режим: <code>{escape(channel.publish_mode)}</code>\n"
             f"Интервал: {format_duration(channel.publish_interval_seconds)}\n"
+            f"Теги канала: {escape(hashtags(getattr(channel, 'default_tags', None) or [])) or 'не заданы'}\n"
             f"{subscribers}\n"
             f"Права бота: {rights}"
         )
@@ -663,7 +668,6 @@ def build_router(
         if stored is None:
             return None
         post = deserialize_post(stored.post_data)
-        combined_tags = effective_tags(stored.user_tags, stored.source_tags)
         prefix = f"Ссылка {position}/{total}\n\n" if total > 1 else ""
         publication_time = (
             format_schedule_datetime(stored.scheduled_at, settings.timezone)
@@ -677,19 +681,19 @@ def build_router(
                 + f"Медиа: {len(post.media_items)}\n"
                 + f"Канал: <code>{escape(stored.channel.alias)}</code>\n"
                 + f"Время публикации: {escape(publication_time)}\n"
-                + f"Длина текста: {len(await previews.caption(stored))} символов\n\n"
+                + f"Длина текста: {telegram_html_length(await previews.caption(stored))} / 4096 символов\n\n"
                 + "Полный предпросмотр отправляется отдельным сообщением."
             )
         caption = await previews.caption(stored)
         return stored, (
             prefix
+            + f"🖼 <b>Черновик #{stored.id}</b>\n\n"
             + f"Источник: {escape(provider_label(post.provider))}\n"
-            + f"Автор: {escape(post.author_name)}\n"
-            + f"Название: {escape(post.title)}\n"
-            + f"Файлов: {len(post.media_items)}\n"
-            + f"Канал: {escape(stored.channel.alias)}\n\n"
-            + f"Время публикации: {escape(publication_time)}\n\n"
-            + f"Теги: {hashtags(combined_tags) or '—'}\n\n"
+            + f"Выбрано: {len(post.media_items)} из {read_album(stored.post_data).original_count}\n"
+            + ("Пока выбраны первые кадры. Полный альбом доступен в редакторе.\n" if post.metadata.get("artwork_album", {}).get("automatic_selection") else "")
+            + f"Канал: {escape(stored.channel.alias)}\n"
+            + f"Время публикации: {escape(publication_time)}\n"
+            + f"Подпись: {telegram_html_length(caption)} / 1024 символов\n\n"
             + "<b>Итоговая подпись</b>\n"
             + caption
         )
@@ -1728,6 +1732,11 @@ def build_router(
             )
             return
         waiting_news = job.status == JobStatus.WAITING_CONFIRMATION and is_news_job(job)
+        if job.status == JobStatus.WAITING_CONFIRMATION and not waiting_news:
+            # Saved artwork drafts must remain reachable after FSM state/messages are lost,
+            # including an empty selection that still needs the album editor.
+            await send_confirmation(message, job)
+            return
         if job.status not in {JobStatus.QUEUED, JobStatus.SCHEDULED} and not waiting_news:
             await message.answer(f"Задание #{job.id} уже не находится в очереди.")
             return
@@ -2163,7 +2172,8 @@ def build_router(
             else:
                 await callback.message.edit_text(f"Задание #{job_id} добавлено в очередь.")
         else:
-            await callback.answer("Задание уже обработано.", show_alert=True)
+            await callback.answer("Не удалось поставить в очередь: проверьте статус и выберите хотя бы одно изображение.", show_alert=True)
+            return
         await callback.answer()
 
     @router.callback_query(F.data.startswith("repeat:"))
@@ -2182,7 +2192,8 @@ def build_router(
                     f"Повторная публикация #{job_id} подтверждена и добавлена в очередь."
                 )
         else:
-            await callback.answer("Задание уже обработано.", show_alert=True)
+            await callback.answer("Не удалось поставить в очередь: проверьте статус и выберите хотя бы одно изображение.", show_alert=True)
+            return
         await callback.answer()
 
     @router.callback_query(F.data.startswith("cancel:"))
@@ -2308,11 +2319,15 @@ def build_router(
         tags = normalize_tags((message.text or "").split(), settings.max_tags, settings.max_tag_length)
         if data.get("tag_mode") == "add":
             tags = merge_tags(tags, job.user_tags, settings.max_tags, settings.max_tag_length)
+        if getattr(jobs,"gate",None):jobs.gate.assert_mutation_allowed()
         async with jobs.sessions() as session, session.begin():
             stored = await session.get(type(job), job.id)
+            if stored.version != job.version or stored.status not in expected_statuses:
+                await message.answer("Публикация уже изменилась; откройте редактор повторно.")
+                return
             stored.user_tags = tags
         await state.clear()
-        combined = effective_tags(tags, job.source_tags)
+        combined = effective_tags(tags, job.source_tags, job.channel)
         if data.get("tag_context") != "queued_preview":
             await message.answer(
                 f"Теги обновлены: {hashtags(combined) or 'без тегов'}",

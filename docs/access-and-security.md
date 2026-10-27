@@ -24,11 +24,16 @@ Username вида `@name` не используется как право дос
 - `PIXIV_COOKIES`;
 - `NEWS_WORKER_TOKEN`;
 - `HOME_WORKER_TOKEN`;
+- `HOME_WORKER_LMSTUDIO_API_KEY`, если включена авторизация LM Studio;
 - credentials базы или прокси, если они есть.
 
 `bot-settings.toml` хранится в Git и принимает только белый список несекретных параметров. Попытка добавить туда неизвестный ключ или токен останавливает запуск.
 
-Лог-фильтр скрывает Telegram bot token, Bearer Authorization, cookie, password и поля вида `*_token` в форматах `key=value`, HTTP-заголовка и JSON.
+Лог-фильтр скрывает Telegram bot token, Bearer Authorization, cookie, password, поля вида `*_token`, `*_api_key`
+и учётные данные в URL. Форматтер применяет ту же очистку к traceback исключений.
+
+Локальный launcher связывает бота и worker временным секретом в памяти, принудительно слушает loopback
+и не требует внешнего news API. Клиенты LM Studio, Ollama и worker API не следуют HTTP-перенаправлениям.
 
 Не вставляйте реальные секреты в сообщения Telegram, issue, commit или документацию. После утечки отзовите токен, а не только удалите его из последнего commit.
 

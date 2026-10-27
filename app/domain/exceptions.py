@@ -3,6 +3,10 @@ class ApplicationError(Exception):
     retryable = False
 
 
+class VersionConflictError(ApplicationError):
+    code = "version_conflict"
+
+
 class ProviderError(ApplicationError):
     code = "provider_error"
 
