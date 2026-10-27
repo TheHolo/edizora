@@ -22,7 +22,7 @@ def build_release(source: Path, output_dir: Path) -> dict:
         if directory.exists():
             files.extend(p for p in directory.rglob("*") if p.is_file() and not p.is_symlink()
                          and "__pycache__" not in p.parts and p.suffix not in {".pyc", ".pyo"})
-    for name in ("pyproject.toml", "uv.lock", "README.md", ".env.example", "bot-settings.toml", "frontend/package.json", "frontend/package-lock.json",
+    for name in ("pyproject.toml", "uv.lock", "README.md", "CHANGELOG.md", ".env.example", "bot-settings.toml", "frontend/package.json", "frontend/package-lock.json",
                  "frontend/index.html", "frontend/tsconfig.json", "frontend/tsconfig.app.json", "frontend/tsconfig.node.json", "frontend/vite.config.ts"):
         if (source / name).is_file():
             files.append(source / name)
@@ -31,7 +31,7 @@ def build_release(source: Path, output_dir: Path) -> dict:
     records = [{"key": p.relative_to(source).as_posix(), "size": p.stat().st_size, "sha256": sha256(p)}
                for p in sorted(set(files))]
     encoded = json.dumps(records, sort_keys=True, separators=(",", ":")).encode()
-    release_id = "publisher-" + hashlib.sha256(encoded).hexdigest()[:16]
+    release_id = "edizora-" + hashlib.sha256(encoded).hexdigest()[:16]
     migration_source = source / "app/db/migrations.py"
     schema_match = re.search(r"^SCHEMA_VERSION\s*=\s*(\d+)", migration_source.read_text(encoding="utf-8"), re.MULTILINE) if migration_source.exists() else None
     manifest = {"format": "publisher-release-v1", "release_id": release_id,
@@ -68,6 +68,7 @@ def verify_release(archive_path: Path) -> dict:
             if len(data) != record["size"] or hashlib.sha256(data).hexdigest() != record["sha256"]:
                 raise VerificationError("Повреждён файл релиза")
         encoded = json.dumps(manifest["files"], sort_keys=True, separators=(",", ":")).encode()
-        if manifest["release_id"] != "publisher-" + hashlib.sha256(encoded).hexdigest()[:16]:
+        digest = hashlib.sha256(encoded).hexdigest()[:16]
+        if manifest["release_id"] not in {"edizora-" + digest, "publisher-" + digest}:
             raise VerificationError("ID релиза не соответствует содержимому")
     return manifest

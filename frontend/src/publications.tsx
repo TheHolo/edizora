@@ -124,7 +124,7 @@ export function CreatePublication({channels,channelID}:PageProps) {
       {kind==='news' && <div className="notice violet"><Sparkles size={19}/><p>AI обработает материал на зарегистрированном исполнителе. Если домашний компьютер выключен, задача дождётся его возвращения.</p></div>}
       <ErrorBlock error={command.error}/>
       <button className="button primary full" type="submit" disabled={command.busy||uploading||!channel||(!source.trim()&&!body.trim()&&!assets.length)}>{command.busy?<Loader2 size={18} className="spin"/>:<Plus size={18}/>}Создать черновик</button>
-    </Panel><div className="rail-note"><Save size={18}/><p>Принятая задача продолжится после закрытия вкладки. Локальный компьютер с Publisher должен оставаться включённым.</p></div></div></form>
+    </Panel><div className="rail-note"><Save size={18}/><p>Принятая задача продолжится после закрытия вкладки. Локальный компьютер с Edizora должен оставаться включённым.</p></div></div></form>
   </>;
 }
 

@@ -58,7 +58,7 @@ def receive(target: LocalNodeTarget, migration_id: str, incoming) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Publisher authenticated node operations")
+    parser = argparse.ArgumentParser(description="Edizora authenticated node operations")
     parser.add_argument("action", choices=["info", "receive", "verify", "activate", "query", "finalize", "abort", "blocks",
                                            "bridge-register", "bridge-poll", "bridge-reply", "export", "route-probe"])
     parser.add_argument("migration_id", nargs="?")

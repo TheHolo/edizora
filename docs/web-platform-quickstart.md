@@ -16,9 +16,9 @@ cd frontend
 npm ci
 npm run build
 cd ..
-$env:PUBLISHER_CONTROL_DIR = "$env:LOCALAPPDATA\Publisher\control"
-$env:PUBLISHER_DATA_ROOT = "$env:LOCALAPPDATA\Publisher\data"
-$env:PUBLISHER_DATABASE_PATH = "$env:PUBLISHER_DATA_ROOT\database.db"
+$env:EDIZORA_CONTROL_DIR = "$env:LOCALAPPDATA\Edizora\control"
+$env:EDIZORA_DATA_ROOT = "$env:LOCALAPPDATA\Edizora\data"
+$env:EDIZORA_DATABASE_PATH = "$env:EDIZORA_DATA_ROOT\database.db"
 .\.venv\Scripts\python.exe -m app.web --initialize --admin-id 123456789 --set-password --setup-only
 .\.venv\Scripts\python.exe -m app.web --admin-id 123456789
 ```
@@ -40,14 +40,14 @@ $env:PUBLISHER_DATABASE_PATH = "$env:PUBLISHER_DATA_ROOT\database.db"
   --checkout 'C:\path\old-publisher' `
   --database 'C:\path\old-publisher\data\database.db' `
   --storage 'C:\path\old-publisher\storage' `
-  --data "$env:LOCALAPPDATA\Publisher\data" `
-  --control "$env:LOCALAPPDATA\Publisher\control" `
+  --data "$env:LOCALAPPDATA\Edizora\data" `
+  --control "$env:LOCALAPPDATA\Edizora\control" `
   --admin-id 123456789 --confirm-stopped
 ```
 
 Команда удерживает блокировки обоих запусков, копирует согласованную SQLite с WAL, проверяет исходную схему/администратора, обновляет только копию, переносит storage и создаёт переносимый каталог медиа. Исходная SQLite не изменяется; ID, история, порядок и расписание сохраняются. Незавершённая старая отправка становится неопределённой и требует ручной сверки. Старый checkout получает `.publisher-managed.json`, блокирующий прежний запуск. Скопированная управляемая БД не принимается как legacy.
 
-Результат — активный host с общей пользовательской паузой. Укажите его пути переменными `PUBLISHER_*`, задайте пароль через `app.web --admin-id ... --set-password --setup-only`, затем откройте панель. Проверьте каналы/расписание/историю. Старые задания без подготовленного плана нужно вернуть в черновики, подготовить и подтвердить заново перед снятием паузы. Очередь из старой версии не считается готовой только по прежнему статусу.
+Результат — активный host с общей пользовательской паузой. Укажите его пути переменными `EDIZORA_*`, задайте пароль через `app.web --admin-id ... --set-password --setup-only`, затем откройте панель. Проверьте каналы/расписание/историю. Старые задания без подготовленного плана нужно вернуть в черновики, подготовить и подтвердить заново перед снятием паузы. Очередь из старой версии не считается готовой только по прежнему статусу.
 
 При ошибке после установки marker автоматический повтор и возврат к старому отправителю запрещены. Сохранены исходные файлы, marker и причина `legacy_import`; разберите ошибку на копии и подготовьте явный план восстановления. Не удаляйте служебные блокировки ради запуска.
 
@@ -55,7 +55,7 @@ $env:PUBLISHER_DATABASE_PATH = "$env:PUBLISHER_DATA_ROOT\database.db"
 
 В рабочем окружении задайте `BOT_TOKEN` и `ADMIN_IDS` до первого запуска с `--enable-bot`. Секреты однократно принимаются в защищённое машинное хранилище; дальнейшие изменения выполняются в панели. Удалённое значение не воскресает из старой `.env`. В тестовом профиле бота не включайте.
 
-Для Mini App нужен собственный HTTPS-адрес панели: `PUBLISHER_ORIGIN=https://publisher.example.org` и `PUBLISHER_PANEL_URL=https://publisher.example.org`. Настройте домен, Caddy и параметры бота. После `app.web --enable-bot --no-browser` меню бота содержит кнопку панели. Доступ разрешён только активным администраторам; сервер проверяет подпись, возраст и повтор initData. Browser-сессия и Mini App bearer имеют разные способы передачи credentials.
+Для Mini App нужен собственный HTTPS-адрес панели: `EDIZORA_ORIGIN=https://publisher.example.org` и `EDIZORA_PANEL_URL=https://publisher.example.org`. Настройте домен, Caddy и параметры бота. После `app.web --enable-bot --no-browser` меню бота содержит кнопку панели. Доступ разрешён только активным администраторам; сервер проверяет подпись, возраст и повтор initData. Browser-сессия и Mini App bearer имеют разные способы передачи credentials.
 
 ## Домашний AI
 
@@ -72,7 +72,7 @@ $env:PUBLISHER_DATABASE_PATH = "$env:PUBLISHER_DATA_ROOT\database.db"
 
 Раздел «Размещение» сохраняет профили, план, подтверждённые hold-исключения и этапы. Закрытие вкладки не отменяет принятую операцию. Перенос начинается только после проверки назначения и общей остановки; после передачи нельзя включать старый источник. Windows за NAT использует исходящий bridge. Полные команды, секреты, backup/restore, все три направления и внешний сценарий — в [руководстве развёртывания](web-platform-deployment-implementation.md).
 
-Корректная остановка: `python -m app.web --stop` с тем же `PUBLISHER_CONTROL_DIR` или штатный `manage.ps1 -Action Stop` / `systemctl stop publisher-host`. Не завершайте отправителя принудительно: неизвестный результат требует сверки канала.
+Корректная остановка: `python -m app.web --stop` с тем же `EDIZORA_CONTROL_DIR` или штатный `manage.ps1 -Action Stop` / `systemctl stop publisher-host`. Не завершайте отправителя принудительно: неизвестный результат требует сверки канала.
 
 ## Повторить проверки и сборку
 
@@ -90,4 +90,4 @@ python -m pytest -q
 python -m app.deployment.cli build-release --source . --output release
 ```
 
-Проверки запускайте из копии без рабочей `.env`, на временных данных. Если системный временный каталог недоступен, `PUBLISHER_TEST_TMP_ROOT` задаёт отдельный разрешённый локальный каталог для испытаний legacy cutover. Хеш ZIP и полный manifest проверяются `python -m app.deployment.cli verify-release <archive.zip>`.
+Проверки запускайте из копии без рабочей `.env`, на временных данных. Если системный временный каталог недоступен, `EDIZORA_TEST_TMP_ROOT` задаёт отдельный разрешённый локальный каталог для испытаний legacy cutover. Хеш ZIP и полный manifest проверяются `python -m app.deployment.cli verify-release <archive.zip>`.

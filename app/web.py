@@ -23,10 +23,11 @@ from app.api.server import WebConfig, create_app
 from app.db.session import create_database, create_schema
 from app.host.control import ControlStore, durable_json
 from app.runtime import InstanceLock
+from app.branding import default_data_root
 
 
 def paths():
-    default = Path(os.environ.get('LOCALAPPDATA', Path.home() / '.local' / 'share')) / 'Publisher'
+    default = default_data_root()
     control = Path(os.environ.get('PUBLISHER_CONTROL_DIR', default / 'control')).resolve()
     data = Path(os.environ.get('PUBLISHER_DATA_ROOT', default / 'data')).resolve()
     database = Path(os.environ.get('PUBLISHER_DATABASE_PATH', data / 'database.db')).resolve()
@@ -111,7 +112,7 @@ async def trusted_setup(options, store, auth, data, database):
 
 
 def run():
-    parser = argparse.ArgumentParser(description='Publisher — управляемая веб-панель')
+    parser = argparse.ArgumentParser(description='Edizora — управляемая веб-панель')
     parser.add_argument('--initialize', action='store_true', help='Доверенная первичная настройка пустой установки')
     parser.add_argument('--activate-initial-installation', action='store_true', help='Явно активировать пустой standby после установки; только вместе с --initialize')
     parser.add_argument('--upgrade', action='store_true', help='Обновление схемы при остановленном runtime')

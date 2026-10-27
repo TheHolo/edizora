@@ -272,7 +272,7 @@ class WorkerPool:
 
     async def assert_quiesced(self) -> None:
         if any(not task.done() for task in self.tasks):
-            raise RuntimeError("Publisher workers are still running")
+            raise RuntimeError("Edizora workers are still running")
 
     def snapshot(self) -> list[WorkerSnapshot]:
         now = time.monotonic()

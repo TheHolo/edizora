@@ -1,4 +1,8 @@
-# Telegram Image & News Publisher
+# Edizora (Эдизора)
+
+Приложение для подготовки и публикации изображений и новостей в Telegram.
+
+**[Скачать Edizora 0.1 для Windows](https://github.com/TheHolo/edizora/releases/download/v0.1/edizora.exe)** · [Все релизы](https://github.com/TheHolo/edizora/releases) · [Что нового](CHANGELOG.md)
 
 **Приложение для Windows:** [установка без терминала и первый запуск](docs/desktop-quickstart.md). Готовый установщик включает Python и веб-интерфейс; поддерживает LM Studio, Ollama и локальные/облачные сервисы с совместимым API. [Сборка и границы предварительного выпуска](docs/desktop-development.md).
 

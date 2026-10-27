@@ -1,13 +1,13 @@
 [Unit]
-Description=Telegram Image Publisher
+Description=Edizora
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=telegram-publisher
-WorkingDirectory=/opt/telegram-image-publisher
-ExecStart=/opt/telegram-image-publisher/.venv/bin/python -m app.main
+User=edizora
+WorkingDirectory=/opt/edizora
+ExecStart=/opt/edizora/.venv/bin/python -m app.main
 Restart=always
 RestartSec=5
 PrivateTmp=true

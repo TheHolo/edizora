@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-SERVICE_NAME="${SERVICE_NAME:-telegram-image-publisher}"
-APP_USER="${APP_USER:-telegram-publisher}"
+SERVICE_NAME="${SERVICE_NAME:-edizora}"
+APP_USER="${APP_USER:-edizora}"
 GIT_REMOTE="${GIT_REMOTE:-origin}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
-APP_ROOT="${APP_ROOT:-/opt/telegram-image-publisher}"
+APP_ROOT="${APP_ROOT:-/opt/edizora}"
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"

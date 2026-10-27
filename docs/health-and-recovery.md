@@ -78,7 +78,7 @@ News-task выдаётся домашнему worker на ограниченно
 
 ```bash
 python -m app.main
-sudo journalctl -u telegram-image-publisher -n 100 --no-pager
+sudo journalctl -u edizora -n 100 --no-pager
 ```
 
 Частые причины: пустой `BOT_TOKEN`, ошибочный JSON каналов, неизвестный ключ в `bot-settings.toml`, недоступный путь SQLite или неверный часовой пояс.
@@ -116,8 +116,8 @@ python -m pip install -e '.[proxy]'
 ## Наблюдение systemd
 
 ```bash
-sudo systemctl status telegram-image-publisher
-sudo journalctl -u telegram-image-publisher -f
+sudo systemctl status edizora
+sudo journalctl -u edizora -f
 ```
 
 Unit автоматически перезапускает процесс через 5 секунд. Не запускайте рядом второй экземпляр с тем же токеном.

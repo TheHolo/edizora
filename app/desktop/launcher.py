@@ -23,10 +23,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.runtime import InstanceLock
+from app.branding import default_data_root
 
 
 def root_path():
-    return Path(os.environ.get("PUBLISHER_DESKTOP_ROOT", Path(os.environ.get("LOCALAPPDATA", Path.home() / ".local/share")) / "Publisher")) .resolve()
+    return Path(os.environ.get("PUBLISHER_DESKTOP_ROOT", default_data_root())).resolve()
 
 
 def configure_environment(root):
@@ -46,7 +47,7 @@ def configure_logs(root):
     from app.logging_config import SecretFormatter, SecretFilter
     directory = root / "logs"
     directory.mkdir(exist_ok=True)
-    handler = RotatingFileHandler(directory / "publisher.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8")
+    handler = RotatingFileHandler(directory / "edizora.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8")
     handler.addFilter(SecretFilter())
     handler.setFormatter(SecretFormatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
     logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
@@ -94,7 +95,7 @@ async def initialize(root: Path, body: SetupInput):
         raise ValueError("Пароли не совпали")
     control, data = root / "control", root / "data"
     if (control / "node.json").exists() or (data.exists() and any(data.iterdir())):
-        raise ValueError("Установка уже содержит данные. Откройте её через Publisher; повторная настройка запрещена")
+        raise ValueError("Установка уже содержит данные. Откройте её через Edizora; повторная настройка запрещена")
     if body.mode == "legacy":
         from app.host.import_legacy import import_legacy
         if not all([body.checkout, body.database, body.storage, body.confirmed_stopped]):
@@ -158,7 +159,7 @@ def recover_initial_moves(root):
         if source.exists() and not target.exists():
             move_directory(source, target)
         elif not target.exists() or source.exists():
-            raise ValueError("Первоначальная установка прервана; сохраните папку Publisher для диагностики")
+            raise ValueError("Первоначальная установка прервана; сохраните папку Edizora для диагностики")
     (root / "install-pending.json").unlink()
 
 
@@ -173,7 +174,7 @@ def setup_app(root, token, origin, on_complete):
         if request.url.path.startswith("/setup-api/"):
             import hmac
             if not hmac.compare_digest(request.headers.get("x-setup-token", ""), token):
-                return JSONResponse({"message": "Откройте настройку через ярлык Publisher"}, 403)
+                return JSONResponse({"message": "Откройте настройку через ярлык Edizora"}, 403)
             if request.method != "GET" and request.headers.get("origin") != origin:
                 return JSONResponse({"message": "Адрес запроса не подтверждён"}, 403)
             try:
@@ -289,13 +290,13 @@ def run():
             kernel = ctypes.WinDLL('kernel32', use_last_error=True)
             kernel.CreateMutexW.argtypes = [ctypes.c_void_p, ctypes.c_bool, ctypes.c_wchar_p]
             kernel.CreateMutexW.restype = ctypes.c_void_p
-            mutex = kernel.CreateMutexW(None, False, 'Local\\Publisher.Application')
+            mutex = kernel.CreateMutexW(None, False, 'Local\\Edizora.Application')
         main()
     except Exception:
-        logging.exception("Не удалось запустить Publisher")
-        message = "Не удалось запустить Publisher. Журнал: " + str(root_path() / "logs/publisher.log")
+        logging.exception("Не удалось запустить Edizora")
+        message = "Не удалось запустить Edizora. Журнал: " + str(root_path() / "logs/edizora.log")
         if os.name == "nt":
-            ctypes.windll.user32.MessageBoxW(None, message, "Publisher", 0x10)
+            ctypes.windll.user32.MessageBoxW(None, message, "Edizora", 0x10)
         else:
             raise
         raise SystemExit(1)

@@ -4,7 +4,7 @@ const form = document.getElementById('setup');
 const mode = document.getElementById('mode');
 const message = document.getElementById('message');
 mode.addEventListener('change', () => {document.getElementById('legacy').hidden = mode.value !== 'legacy';document.getElementById('restore').hidden = mode.value !== 'restore';});
-if (!token) {message.textContent = 'Откройте мастер через ярлык Publisher. Обновление этой страницы не повторяет запуск.';document.getElementById('submit').disabled = true;}
+if (!token) {message.textContent = 'Откройте мастер через ярлык Edizora. Обновление этой страницы не повторяет запуск.';document.getElementById('submit').disabled = true;}
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = document.getElementById('submit');
@@ -17,5 +17,5 @@ form.addEventListener('submit', async (event) => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Не удалось завершить настройку');
     form.reset();message.textContent = result.message;button.textContent = 'Готово';
-  } catch (error) {message.textContent = error.message || 'Нет связи с приложением. Откройте Publisher повторно.';button.disabled = false;}
+  } catch (error) {message.textContent = error.message || 'Нет связи с приложением. Откройте Edizora повторно.';button.disabled = false;}
 });

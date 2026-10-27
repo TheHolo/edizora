@@ -1,4 +1,4 @@
-# Сборка и проверка устанавливаемого Publisher
+# Сборка и проверка устанавливаемого Edizora
 
 ## Архитектура
 
@@ -21,19 +21,19 @@ npm --prefix frontend run build
 powershell -NoProfile -ExecutionPolicy Bypass -File deploy/build-desktop.ps1 -Compiler 'C:\path\ISCC.exe'
 ```
 
-Результат: `output/desktop/Publisher-Setup-0.2.0-windows-x64.exe`, SHA-256 и папка `bundle/Publisher` для проверки самостоятельного запуска. Сборщик не читает `.env`, рабочие БД или storage; release ZIP формируется по штатному списку файлов исходников.
+Результат: `output/desktop/edizora.exe`, SHA-256 и папка `bundle/edizora` для проверки самостоятельного запуска. Сборщик не читает `.env`, рабочие БД или storage; release ZIP формируется по штатному списку файлов исходников.
 
 ```powershell
 python -m pytest tests/test_desktop.py -q
-$env:PUBLISHER_TEST_EXECUTABLE = (Resolve-Path output/desktop/bundle/Publisher/Publisher.exe).Path
+$env:EDIZORA_TEST_EXECUTABLE = (Resolve-Path output/desktop/bundle/edizora/edizora.exe).Path
 python -m pytest tests/test_desktop_bundle.py -q
 npm --prefix frontend run test:client
 ```
 
-Для проверок legacy используйте `PUBLISHER_TEST_TMP_ROOT` вне OneDrive. В ограниченной среде также задайте доступные TEMP/TMP и UV_CACHE_DIR.
+Для проверок legacy используйте `EDIZORA_TEST_TMP_ROOT` вне OneDrive. В ограниченной среде также задайте доступные TEMP/TMP и UV_CACHE_DIR.
 
 ## Границы предварительного выпуска
 
-Не настроены публичный канал доставки обновлений, сертификат издателя, публичная страница скачивания и служба поддержки. Пересборка и повторный запуск установщика обновляют программу с локальной копией данных; автоматического отката несовместимой схемы нет. Для публичного выпуска нужны решение об имени/издателе, лицензия самого проекта, подпись пакетов и независимая чистая Windows-машина.
+Выпуски и готовый установщик публикуются на [GitHub Releases](https://github.com/TheHolo/edizora/releases). Имя продукта — Edizora (Эдизора), версия первого выпуска — 0.1. Установщик пока не подписан цифровым сертификатом; автоматическая загрузка обновлений не реализована. Пересборка и повторный запуск установщика обновляют программу с локальной копией данных; автоматического отката несовместимой схемы нет.
 
 Новый установщик не доказывает работоспособность внешних SSH-переносов, DNS/HTTPS, Mini App или конкретного облачного AI. Эти проверки выполняются отдельно на тестовых аккаунтах. Совместимые AI должны поддерживать JSON Schema; универсального адаптера ко всем существующим протоколам нет.

@@ -1,4 +1,4 @@
-# Build from the project root: python -m PyInstaller deploy/publisher.spec
+# Build from the project root: python -m PyInstaller deploy/edizora.spec
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files, copy_metadata
 
@@ -20,6 +20,7 @@ analysis = Analysis([str(root / 'deploy/desktop_entry.py')], pathex=[str(root)],
     binaries=[], datas=datas, hiddenimports=hidden, hookspath=[],
     excludes=['pytest', 'tkinter', 'pip', 'setuptools', 'PyInstaller'], noarchive=False)
 pyz = PYZ(analysis.pure)
-exe = EXE(pyz, analysis.scripts, [], exclude_binaries=True, name='Publisher',
-    debug=False, strip=False, upx=False, console=False, icon=str(root / 'work/desktop-icon.ico'))
-bundle = COLLECT(exe, analysis.binaries, analysis.datas, strip=False, upx=False, name='Publisher')
+exe = EXE(pyz, analysis.scripts, [], exclude_binaries=True, name='edizora',
+    debug=False, strip=False, upx=False, console=False,
+    version=str(root / 'work/windows-version.txt'), icon=str(root / 'work/desktop-icon.ico'))
+bundle = COLLECT(exe, analysis.binaries, analysis.datas, strip=False, upx=False, name='edizora')

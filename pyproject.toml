@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "telegram-image-publisher"
-version = "0.1.0"
-description = "Private Telegram bot that prepares and publishes artwork and locally rewritten news"
+name = "edizora"
+version = "0.1"
+description = "Edizora — desktop app for artwork, news and Telegram publishing"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -46,11 +46,12 @@ dev = [
 ]
 
 [project.scripts]
+edizora = "app.desktop.launcher:run"
 news-home-worker = "app.home_worker:run"
-publisher-local = "app.local:run"
-publisher-web = "app.web:run"
-publisher-ai-worker = "app.worker_v1:run"
-publisher-desktop = "app.desktop.launcher:run"
+edizora-local = "app.local:run"
+edizora-web = "app.web:run"
+edizora-ai-worker = "app.worker_v1:run"
+edizora-desktop = "app.desktop.launcher:run"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]

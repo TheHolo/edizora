@@ -36,7 +36,7 @@ def upgrade(connection):
               "jobs": {"id", "created_by_user_id", "post_data", "status", "target_channel_id"}}
     if tables:
         if not set(legacy) <= tables:
-            raise RuntimeError("Unknown database schema: Publisher base tables are missing")
+            raise RuntimeError("Unknown database schema: Edizora base tables are missing")
         for table, required in legacy.items():
             if not required <= {c["name"] for c in inspector.get_columns(table)}:
                 raise RuntimeError(f"Unknown legacy table layout: {table}")

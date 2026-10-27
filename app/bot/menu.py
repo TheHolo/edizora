@@ -86,7 +86,7 @@ async def configure_bot_ui(bot: Bot, *, panel_url: str | None = None) -> None:
         if parsed.scheme!="https" or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
             raise ValueError("Telegram Mini App требует проверенный HTTPS-адрес панели без пароля и fragment")
     await bot.set_my_commands(bot_commands())
-    desired=MenuButtonWebApp(text="Открыть Publisher",web_app=WebAppInfo(url=panel_url)) if panel_url else MenuButtonCommands()
+    desired=MenuButtonWebApp(text="Открыть Edizora",web_app=WebAppInfo(url=panel_url)) if panel_url else MenuButtonCommands()
     if panel_url:
         current=await bot.get_chat_menu_button()
         if isinstance(current,MenuButtonWebApp) and current.web_app.url==panel_url:return

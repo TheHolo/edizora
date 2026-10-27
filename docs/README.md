@@ -8,6 +8,8 @@ README оставлен коротким: в этой папке каждая к
 
 ## Устанавливаемое приложение
 
+- [История выпусков](../CHANGELOG.md) · [Скачать Edizora](https://github.com/TheHolo/edizora/releases/latest).
+- [Имя, версия и совместимость](branding.md).
 - [Установка без терминала](desktop-quickstart.md) — первый запуск, Telegram, локальный и облачный AI.
 - [Сборка Windows-приложения](desktop-development.md) — архитектура, проверки и границы предварительного выпуска.
 

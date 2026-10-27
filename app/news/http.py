@@ -85,7 +85,7 @@ class SafeHttpFetcher:
         max_redirects: int = 5,
         timeout_seconds: float = 20,
         dns_validator: DnsValidator = ensure_public_dns,
-        user_agent: str = "TelegramNewsPublisher/0.1 (+private editorial bot)",
+        user_agent: str = "Edizora/0.1 (+private editorial bot)",
     ) -> None:
         if max_bytes <= 0 or max_redirects < 0 or timeout_seconds <= 0:
             raise ValueError("HTTP fetch limits must be positive")

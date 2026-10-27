@@ -1,6 +1,6 @@
 {
-  "name": "publisher-panel",
-  "version": "1.0.0",
+  "name": "edizora-panel",
+  "version": "0.1",
   "private": true,
   "type": "module",
   "scripts": {

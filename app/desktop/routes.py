@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from app.application.platform import PlatformError
 from app.desktop.ai import Connection, add_connection, probe, profiles, public_profile
 from app.host.secrets import SecretStore
+from app.branding import APP_NAME, APP_VERSION
 
 
 class TelegramInput(BaseModel):
@@ -30,7 +31,7 @@ def install_routes(app, principal, auth, runtime, gate):
     @app.get('/api/v1/desktop/status')
     async def status(actor=Depends(principal)):
         version_path = Path(__file__).resolve().parents[2] / 'desktop-version.json'
-        version = json.loads(version_path.read_text(encoding='utf-8')) if version_path.is_file() else {'version': 'development', 'channel': 'source'}
+        version = json.loads(version_path.read_text(encoding='utf-8')) if version_path.is_file() else {'version': APP_VERSION, 'channel': 'source'}
         return {"installed": True, "telegram_configured": bool(secret_store.read('BOT_TOKEN')),
                 "connections": [public_profile(p) for p in profiles(secret_store)],
                 "computer_required": True, "autostart": autostart_enabled(), **version}
@@ -41,12 +42,12 @@ def install_routes(app, principal, auth, runtime, gate):
         import platform
         from app.db.migrations import SCHEMA_VERSION
         state = await status(actor)
-        return JSONResponse({'application': 'Publisher', 'version': state['version'], 'platform': platform.system(),
+        return JSONResponse({'application': APP_NAME, 'version': state['version'], 'platform': platform.system(),
             'os_version': platform.version(), 'schema_version': SCHEMA_VERSION,
             'telegram_configured': state['telegram_configured'], 'ai_connection_count': len(state['connections']),
             'publication_allowed': gate.status()['publication_allowed'], 'role': gate.identity()['role'],
             'active_sends': gate.status()['active_sends'], 'autostart': state['autostart']},
-            headers={'Content-Disposition': 'attachment; filename="publisher-diagnostics.json"'})
+            headers={'Content-Disposition': 'attachment; filename="edizora-diagnostics.json"'})
 
     @app.post('/api/v1/desktop/ai/test')
     async def test(body: Connection, actor=Depends(principal)):
@@ -130,7 +131,7 @@ def autostart_enabled():
     import winreg
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Run') as key:
-            return bool(winreg.QueryValueEx(key, 'Publisher')[0])
+            return any(_autostart_value(winreg, key, name) for name in ('Edizora', 'Publisher'))
     except OSError:
         return False
 
@@ -141,10 +142,22 @@ def set_autostart(enabled):
     import subprocess
     import winreg
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Run') as key:
+        # Retire the legacy entry so upgrades never launch both executables.
+        try:
+            winreg.DeleteValue(key, 'Publisher')
+        except FileNotFoundError:
+            pass
         if enabled:
-            winreg.SetValueEx(key, 'Publisher', 0, winreg.REG_SZ, subprocess.list2cmdline([sys.executable, '--background']))
+            winreg.SetValueEx(key, 'Edizora', 0, winreg.REG_SZ, subprocess.list2cmdline([sys.executable, '--background']))
         else:
             try:
-                winreg.DeleteValue(key, 'Publisher')
+                winreg.DeleteValue(key, 'Edizora')
             except FileNotFoundError:
                 pass
+
+
+def _autostart_value(registry, key, name):
+    try:
+        return bool(registry.QueryValueEx(key, name)[0])
+    except FileNotFoundError:
+        return False

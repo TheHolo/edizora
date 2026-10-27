@@ -19,3 +19,5 @@ backups/
 htmlcov/
 work/
 output/desktop/
+frontend/node_modules/
+frontend/dist/

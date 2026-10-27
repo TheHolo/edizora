@@ -309,7 +309,7 @@ def test_release_is_deterministic_and_excludes_secrets(tmp_path):
     (source / "app").mkdir(parents=True)
     (source / "frontend" / "dist").mkdir(parents=True)
     (source / "app" / "main.py").write_text("print('working tree')", encoding="utf-8")
-    (source / "frontend" / "dist" / "index.html").write_text("<main>Publisher</main>", encoding="utf-8")
+    (source / "frontend" / "dist" / "index.html").write_text("<main>Edizora</main>", encoding="utf-8")
     (source / "frontend" / "scripts").mkdir()
     (source / "frontend" / "scripts" / "check-api.mjs").write_text("// schema check", encoding="utf-8")
     (source / "bot-settings.toml").write_text('[bot]\ntimezone = "UTC"\n', encoding="utf-8")

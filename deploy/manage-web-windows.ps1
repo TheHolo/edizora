@@ -1,13 +1,13 @@
 param([ValidateSet('Start','Stop','Restart','Logs','InstallAutostart','RemoveAutostart')][string]$Action = 'Start')
 $ErrorActionPreference = 'Stop'
 $configuration = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'installation.json') -Raw | ConvertFrom-Json
-$env:PUBLISHER_CONTROL_DIR = $configuration.control
-$env:PUBLISHER_DATA_ROOT = $configuration.data
-$env:PUBLISHER_DATABASE_PATH = Join-Path $configuration.data 'publisher.sqlite'
-$env:PUBLISHER_FRONTEND_DIR = $configuration.frontend
-$env:PUBLISHER_HOST = '127.0.0.1'
-$env:PUBLISHER_PORT = '8000'
-$taskName = 'Publisher Host (' + $env:USERNAME + ')'
+$env:EDIZORA_CONTROL_DIR = $configuration.control
+$env:EDIZORA_DATA_ROOT = $configuration.data
+$env:EDIZORA_DATABASE_PATH = Join-Path $configuration.data 'publisher.sqlite'
+$env:EDIZORA_FRONTEND_DIR = $configuration.frontend
+$env:EDIZORA_HOST = '127.0.0.1'
+$env:EDIZORA_PORT = '8000'
+$taskName = 'Edizora Host (' + $env:USERNAME + ')'
 switch ($Action) {
     'InstallAutostart' {
         $arguments = '-NoProfile -WindowStyle Hidden -File "' + $PSCommandPath + '" -Action Start'

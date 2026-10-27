@@ -29,7 +29,7 @@ if node and retired.exists():node['role']='retired'
 data=pathlib.Path('/var/lib/publisher/data')
 foreign=bool(data.exists() and any(data.iterdir()) and not node)
 unit=pathlib.Path('/etc/systemd/system/publisher-host.service')
-unit_conflict=unit.exists() and 'Description=Publisher managed host and runtime' not in unit.read_text()
+unit_conflict=unit.exists() and not any(name in unit.read_text() for name in ('Description=Edizora managed host and runtime', 'Description=Publisher managed host and runtime'))
 unsafe_paths=any(pathlib.Path(p).is_symlink() for p in ['/var/lib/publisher','/var/lib/publisher/data','/var/lib/publisher/control','/opt/publisher','/opt/publisher/releases','/etc/publisher'])
 print(json.dumps({'os_id':v.get('ID'),'os_version':v.get('VERSION_ID'),'architecture':platform.machine(),
  'free_bytes':min(shutil.disk_usage('/var/lib').free,shutil.disk_usage('/tmp').free),'hostname':platform.node(),
@@ -163,7 +163,7 @@ class ParamikoNodeTarget:
         existing = report.get("identity")
         if existing:
             if existing.get("system_id") != self.expected["system_id"] or existing.get("role") not in {"standby", "retired"}:
-                raise VerificationError("На назначении уже зарегистрирован другой или активный Publisher")
+                raise VerificationError("На назначении уже зарегистрирован другой или активный Edizora")
             node = existing
         else:
             node = {"node_id": self.profile["pending_node_id"], "system_id": self.expected["system_id"],
@@ -216,7 +216,7 @@ printf '\n__PUB_END__\n'
         return {"os_id": version.get("ID"), "os_version": version.get("VERSION_ID"), "architecture": text("ARCH"),
                 "hostname": text("HOST"), "root_preflight": text("UID") == "0", "free_bytes": min(free),
                 "identity": identity, "foreign_data": bool(text("FOREIGN")), "unsafe_paths": bool(text("UNSAFE")),
-                "unit_conflict": bool(unit and "Description=Publisher managed host and runtime" not in unit)}
+                "unit_conflict": bool(unit and not any(name in unit for name in ("Description=Edizora managed host and runtime", "Description=Publisher managed host and runtime")))}
 
     def provision(self, *, migration_id: str, node_id: str, https_url: str | None = None, progress=None):
         info = self.info()

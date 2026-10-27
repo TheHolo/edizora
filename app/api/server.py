@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException
 from app.api.auth import AuthError, AuthStore, Principal
 from app.application.platform import PlatformError
 from app.host.control import GateClosed
+from app.branding import APP_NAME, APP_VERSION
 from app.deployment.snapshot import VerificationError
 from app.api.models import (ActionInput, ChangePassword, ChannelInput, DraftInput,
     ErrorResponse, LocalExchange, MutationInput, PasswordBody, PasswordLogin, ChannelDTO,ChannelPage,OperationDTO,OperationPage,
@@ -43,7 +44,7 @@ async def invoke(target, method, *args, **kwargs):
 def create_app(service, auth: AuthStore, *, config: WebConfig | None = None,
                deployment=None, gate=None, lifespan=None) -> FastAPI:
     config = config or WebConfig()
-    app = FastAPI(title="Publisher API", version="1.0.0", lifespan=lifespan,
+    app = FastAPI(title=f"{APP_NAME} API", version=APP_VERSION, lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None,
                   responses={401: {"model": ErrorResponse}, 409: {"model": ErrorResponse},
                              422: {"model": ErrorResponse}, 503: {"model": ErrorResponse}})

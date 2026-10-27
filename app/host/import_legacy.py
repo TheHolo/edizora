@@ -26,7 +26,7 @@ def _legacy_report(database: Path, admin_id: int):
     with closing(sqlite3.connect(database.as_uri() + '?mode=ro', uri=True)) as db:
         tables = set(report['tables'])
         if not {'users', 'channels', 'jobs'} <= tables:
-            raise ValueError('Это не база старого Publisher')
+            raise ValueError('Это не база старого Edizora')
         for table in ('application_state', 'operations', 'publication_attempts', 'telegram_inbox'):
             if table in tables and db.execute('SELECT 1 FROM "' + table + '" LIMIT 1').fetchone():
                 raise ValueError('Управляемый набор нельзя активировать как legacy; используйте перенос или восстановление')

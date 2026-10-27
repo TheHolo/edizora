@@ -38,18 +38,18 @@
 powershell -File deploy\install-web-windows.ps1 -ReleaseArchive <release.zip> -ExpectedSha256 <sha256> -SystemId <system-uuid>
 ```
 
-По умолчанию программа, данные и control state разделены внутри `%LOCALAPPDATA%\Publisher`. OneDrive и UNC не подходят для активной SQLite. Существующая рабочая БД не перемещается этой командой. Повтор того же релиза проверяет уже установленные файлы; смена релиза требует отдельного остановленного обновления.
+По умолчанию программа, данные и control state разделены внутри `%LOCALAPPDATA%\Edizora`. OneDrive и UNC не подходят для активной SQLite. Существующая рабочая БД не перемещается этой командой. Повтор того же релиза проверяет уже установленные файлы; смена релиза требует отдельного остановленного обновления.
 
 Host устанавливается пассивно. Для первой новой пустой установки доверенная локальная настройка выполняется с `app.web --initialize --activate-initial-installation --admin-id ... --set-password --setup-only` при заданных путях control/data/database установленного host. Флаг активации допускается только для пустого standby первого поколения без истории переноса, tombstone и причин остановки; удерживается штатный host.lock. Обычный `--initialize` не меняет роль standby. Для назначения миграции первоначальную настройку не запускать: сохранить standby и отсутствующую БД до подтверждённой передачи. Копия существующей БД не может получить право запуска через первоначальную активацию.
 
 Управление установленным host:
 
 ```powershell
-powershell -File "$env:LOCALAPPDATA\Publisher\manage.ps1" -Action Start
-powershell -File "$env:LOCALAPPDATA\Publisher\manage.ps1" -Action Stop
-powershell -File "$env:LOCALAPPDATA\Publisher\manage.ps1" -Action Restart
-powershell -File "$env:LOCALAPPDATA\Publisher\manage.ps1" -Action InstallAutostart
-powershell -File "$env:LOCALAPPDATA\Publisher\manage.ps1" -Action RemoveAutostart
+powershell -File "$env:LOCALAPPDATA\Edizora\manage.ps1" -Action Start
+powershell -File "$env:LOCALAPPDATA\Edizora\manage.ps1" -Action Stop
+powershell -File "$env:LOCALAPPDATA\Edizora\manage.ps1" -Action Restart
+powershell -File "$env:LOCALAPPDATA\Edizora\manage.ps1" -Action InstallAutostart
+powershell -File "$env:LOCALAPPDATA\Edizora\manage.ps1" -Action RemoveAutostart
 ```
 
 Автозапуск создаётся только явной командой и под текущим пользователем. Остановка проходит через host, а не принудительное завершение отправителя. Старые ярлыки/службы/контейнеры прежнего неуправляемого бота нужно выявить и отключить перед первым промышленным включением.

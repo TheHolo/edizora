@@ -1,1 +1,1 @@
-"""Installed Publisher application and local onboarding."""
+"""Installed Edizora application and local onboarding."""

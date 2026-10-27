@@ -1,6 +1,6 @@
 param(
     [string]$Compiler = '',
-    [string]$Version = '0.2.0',
+    [string]$Version = '0.1',
     [switch]$BundleOnly
 )
 $ErrorActionPreference = 'Stop'
@@ -14,7 +14,7 @@ $env:TEMP = Join-Path $taskRoot 'work\desktop-temp'
 $env:TMP = $env:TEMP
 & $taskPython 'deploy\prepare-desktop.py' --version $Version
 if ($LASTEXITCODE -ne 0) { throw 'Could not prepare package metadata.' }
-& $taskPython -m PyInstaller --noconfirm --log-level WARN --distpath 'output\desktop\bundle' --workpath 'work\pyinstaller' 'deploy\publisher.spec'
+& $taskPython -m PyInstaller --noconfirm --log-level WARN --distpath 'output\desktop\bundle' --workpath 'work\pyinstaller' 'deploy\edizora.spec'
 if ($LASTEXITCODE -ne 0) { throw 'Desktop bundle failed.' }
 if (!$BundleOnly) {
     if (!$Compiler) {
@@ -22,9 +22,9 @@ if (!$BundleOnly) {
         $Compiler = $taskCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
     }
     if (!$Compiler) { throw 'Inno Setup compiler is required to build Setup.exe. Pass -Compiler with its path.' }
-    & $Compiler '/Q' "/DAppVersion=$Version" 'deploy\publisher.iss'
+    & $Compiler '/Q' "/DAppVersion=$Version" 'deploy\edizora.iss'
     if ($LASTEXITCODE -ne 0) { throw 'Windows installer failed.' }
-    Get-ChildItem 'output\desktop\Publisher-Setup-*.exe' | Get-FileHash -Algorithm SHA256 | ForEach-Object {
+    Get-ChildItem 'output\desktop\edizora.exe' | Get-FileHash -Algorithm SHA256 | ForEach-Object {
         ($_.Hash.ToLowerInvariant() + '  ' + (Split-Path $_.Path -Leaf)) | Set-Content -Encoding ascii ($_.Path + '.sha256')
     }
 }

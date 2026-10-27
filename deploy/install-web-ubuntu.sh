@@ -42,7 +42,8 @@ with zipfile.ZipFile(archive) as bundle:
     assert manifest['format']=='publisher-release-v1'
     records=manifest['files']
     encoded=json.dumps(records,sort_keys=True,separators=(',',':')).encode()
-    assert manifest['release_id']=='publisher-'+hashlib.sha256(encoded).hexdigest()[:16]
+    digest=hashlib.sha256(encoded).hexdigest()[:16]
+    assert manifest['release_id'] in {'edizora-'+digest, 'publisher-'+digest}
     assert set(bundle.namelist())=={x['key'] for x in records}|{'release-manifest.json'}
     assert len(bundle.namelist())==len(set(bundle.namelist()))
     assert sum(x.file_size for x in bundle.infolist()) < 2*1024**3
@@ -109,12 +110,12 @@ if [[ -L /opt/publisher/current ]]; then
 else
   ln -s -- "$release" /opt/publisher/current
 fi
-if [[ -e /etc/systemd/system/publisher-host.service ]] && ! grep -q '^Description=Publisher managed host and runtime$' /etc/systemd/system/publisher-host.service; then
+if [[ -e /etc/systemd/system/publisher-host.service ]] && ! grep -Eq '^Description=(Edizora|Publisher) managed host and runtime$' /etc/systemd/system/publisher-host.service; then
   echo 'An unrelated publisher-host.service already exists; refusing overwrite.' >&2; exit 1
 fi
 cat > /etc/systemd/system/publisher-host.service <<EOF
 [Unit]
-Description=Publisher managed host and runtime
+Description=Edizora managed host and runtime
 After=network-online.target
 Wants=network-online.target
 
@@ -173,7 +174,7 @@ EOF
   if [[ "$caddy_preexisting" == false ]]; then
     cat > /etc/systemd/system/publisher-proxy.service <<EOF
 [Unit]
-Description=Publisher dedicated HTTPS proxy
+Description=Edizora dedicated HTTPS proxy
 After=network-online.target publisher-host.service
 Wants=network-online.target
 [Service]

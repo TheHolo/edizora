@@ -224,12 +224,12 @@ python -m pip install -e '.[postgres]'
 Для хранения данных вне OneDrive на Windows:
 
 ```dotenv
-DATABASE_URL=sqlite+aiosqlite:///C:/TelegramPublisher/data/database.db
+DATABASE_URL=sqlite+aiosqlite:///C:/Edizora/data/database.db
 ```
 
 ```toml
 [bot]
-storage_path = "C:/TelegramPublisher/storage"
+storage_path = "C:/Edizora/storage"
 ```
 
 Редактируйте существующую секцию `[bot]`. Перенос текущей базы и storage делайте при остановленном боте;

@@ -17,9 +17,10 @@ def mark_managed_checkout(control_dir: Path) -> None:
 
 
 def assert_legacy_entrypoint_allowed() -> None:
-    default_control=Path(os.environ.get('LOCALAPPDATA',Path.home()/'.local'/'share'))/'Publisher'/'control'/'node.json'
-    if os.environ.get("PUBLISHER_CONTROL_DIR") or managed_checkout_marker().is_file() or default_control.is_file():
-        raise RuntimeError("Эта установка управляется веб-панелью Publisher. Старый запуск бота заблокирован, чтобы не создать второго отправителя и не оживить перенесённый узел. Откройте python -m app.web или штатный launcher веб-панели.")
+    from app.branding import data_roots
+    managed_data = any((root / 'control/node.json').is_file() for root in data_roots())
+    if os.environ.get("PUBLISHER_CONTROL_DIR") or managed_checkout_marker().is_file() or managed_data:
+        raise RuntimeError("Эта установка управляется веб-панелью Edizora. Старый запуск бота заблокирован, чтобы не создать второго отправителя и не оживить перенесённый узел. Откройте python -m app.web или штатный launcher веб-панели.")
 
 
 async def supervise(*services: Coroutine[Any, Any, None]) -> None:

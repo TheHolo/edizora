@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory=$true)][string]$ReleaseArchive,
     [Parameter(Mandatory=$true)][string]$ExpectedSha256,
     [Parameter(Mandatory=$true)][guid]$SystemId,
-    [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA 'Publisher')
+    [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA 'Edizora')
 )
 $ErrorActionPreference = 'Stop'
 $archive = (Resolve-Path -LiteralPath $ReleaseArchive).Path
@@ -11,7 +11,7 @@ $resolvedRoot = [IO.Path]::GetFullPath($InstallRoot)
 if ($resolvedRoot.StartsWith('\\') -or $resolvedRoot -match '(?i)\\OneDrive(?:\\|$)') { throw 'Choose a local folder outside OneDrive or a network share.' }
 if ((Test-Path -LiteralPath $resolvedRoot) -and (Get-ChildItem -LiteralPath $resolvedRoot -Force | Select-Object -First 1) -and -not (Test-Path -LiteralPath (Join-Path $resolvedRoot '.publisher-installation'))) { throw 'Choose an empty dedicated application folder. Existing unrelated files will not be changed.' }
 New-Item -ItemType Directory -Path $resolvedRoot -Force | Out-Null
-'Publisher managed installation v1' | Set-Content -LiteralPath (Join-Path $resolvedRoot '.publisher-installation') -Encoding ASCII
+'Edizora managed installation v1' | Set-Content -LiteralPath (Join-Path $resolvedRoot '.publisher-installation') -Encoding ASCII
 $currentSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 & icacls.exe $resolvedRoot '/inheritance:r' '/grant:r' ('*' + $currentSid + ':(OI)(CI)F') '*S-1-5-18:(OI)(CI)F' | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'Unable to make the installation directory private to this Windows user.' }
@@ -37,7 +37,7 @@ try {
     }
 } finally { $bundle.Dispose() }
 $manifest = Get-Content -LiteralPath (Join-Path $stage 'release-manifest.json') -Raw | ConvertFrom-Json
-if ($manifest.format -ne 'publisher-release-v1' -or $manifest.release_id -notmatch '^publisher-[0-9a-f]{16}$') { throw 'Invalid release manifest.' }
+if ($manifest.format -ne 'publisher-release-v1' -or $manifest.release_id -notmatch '^(edizora|publisher)-[0-9a-f]{16}$') { throw 'Invalid release manifest.' }
 if ($seen.Count -ne ($manifest.files.Count + 1)) { throw 'Unexpected release files.' }
 foreach ($record in $manifest.files) {
     $path = Join-Path $stage $record.key

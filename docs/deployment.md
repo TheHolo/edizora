@@ -47,7 +47,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\deploy\run-local.ps1 -Back
 
 ## Установка systemd с нуля
 
-Команды ниже рассчитаны на Ubuntu 24.04 и каталог `/opt/telegram-image-publisher`.
+Команды ниже рассчитаны на Ubuntu 24.04 и каталог `/opt/edizora`.
 
 ### 1. Пакеты
 
@@ -63,35 +63,35 @@ python3.12 --version
 
 ```bash
 sudo useradd --system --user-group \
-  --home-dir /opt/telegram-image-publisher \
+  --home-dir /opt/edizora \
   --shell /usr/sbin/nologin \
-  telegram-publisher
+  edizora
 
-sudo install -d -o telegram-publisher -g telegram-publisher -m 0750 \
-  /opt/telegram-image-publisher
+sudo install -d -o edizora -g edizora -m 0750 \
+  /opt/edizora
 
-sudo -u telegram-publisher git clone \
+sudo -u edizora git clone \
   --branch main --single-branch \
   REPLACE_WITH_REPOSITORY_URL \
-  /opt/telegram-image-publisher
+  /opt/edizora
 
-cd /opt/telegram-image-publisher
+cd /opt/edizora
 ```
 
-Для приватного репозитория заранее настройте deploy key или другой read-only доступ под `telegram-publisher`. Каталог назначения перед `git clone` должен быть пустым.
+Для приватного репозитория заранее настройте deploy key или другой read-only доступ под `edizora`. Каталог назначения перед `git clone` должен быть пустым.
 
 ### 3. Python
 
 ```bash
-sudo -u telegram-publisher python3.12 -m venv \
-  /opt/telegram-image-publisher/.venv
+sudo -u edizora python3.12 -m venv \
+  /opt/edizora/.venv
 
-sudo -u telegram-publisher \
-  /opt/telegram-image-publisher/.venv/bin/python -m pip install --upgrade pip
+sudo -u edizora \
+  /opt/edizora/.venv/bin/python -m pip install --upgrade pip
 
-sudo -u telegram-publisher \
-  /opt/telegram-image-publisher/.venv/bin/python -m pip install -e \
-  /opt/telegram-image-publisher
+sudo -u edizora \
+  /opt/edizora/.venv/bin/python -m pip install -e \
+  /opt/edizora
 ```
 
 Варианты extras:
@@ -107,12 +107,12 @@ python -m pip install -e '.[postgres]'
 python -m pip install -e '.[proxy,postgres]'
 ```
 
-В production выполняйте эти команды через `sudo -u telegram-publisher` и Python из созданного venv.
+В production выполняйте эти команды через `sudo -u edizora` и Python из созданного venv.
 
 ### 4. Конфигурация
 
 ```bash
-sudo -u telegram-publisher cp .env.example .env
+sudo -u edizora cp .env.example .env
 sudo chmod 0600 .env
 sudoedit .env
 ```
@@ -120,8 +120,8 @@ sudoedit .env
 Проверьте загрузку:
 
 ```bash
-sudo -u telegram-publisher \
-  /opt/telegram-image-publisher/.venv/bin/python -c \
+sudo -u edizora \
+  /opt/edizora/.venv/bin/python -c \
   "from app.config import Settings; s=Settings(); print(len(s.admin_ids), len(s.channels_json))"
 ```
 
@@ -130,26 +130,26 @@ sudo -u telegram-publisher \
 ### 5. Unit
 
 ```bash
-sudo cp deploy/telegram-image-publisher.service \
-  /etc/systemd/system/telegram-image-publisher.service
+sudo cp deploy/edizora.service \
+  /etc/systemd/system/edizora.service
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now telegram-image-publisher
-sudo systemctl status telegram-image-publisher --no-pager
+sudo systemctl enable --now edizora
+sudo systemctl status edizora --no-pager
 ```
 
 Unit запускает:
 
 ```text
-/opt/telegram-image-publisher/.venv/bin/python -m app.main
+/opt/edizora/.venv/bin/python -m app.main
 ```
 
-и использует `WorkingDirectory=/opt/telegram-image-publisher`, поэтому Pydantic находит `.env` и `bot-settings.toml` без отдельного `EnvironmentFile`.
+и использует `WorkingDirectory=/opt/edizora`, поэтому Pydantic находит `.env` и `bot-settings.toml` без отдельного `EnvironmentFile`.
 
 ### 6. Проверка
 
 ```bash
-sudo journalctl -u telegram-image-publisher -n 100 --no-pager
+sudo journalctl -u edizora -n 100 --no-pager
 ```
 
 В Telegram выполните `/health full`, затем создайте тестовый черновик и опубликуйте его в тестовый канал.
@@ -171,7 +171,7 @@ sudo journalctl -u telegram-image-publisher -n 100 --no-pager
 Запуск:
 
 ```bash
-cd /opt/telegram-image-publisher
+cd /opt/edizora
 sudo ./deploy/update.sh
 ```
 
@@ -274,7 +274,7 @@ news-home-worker --once
 Рекомендуемая структура:
 
 ```text
-/opt/telegram-image-publisher/
+/opt/edizora/
 ├── .git/
 ├── .venv/
 ├── .env
@@ -286,4 +286,4 @@ news-home-worker --once
 └── pyproject.toml
 ```
 
-Весь рабочий каталог должен принадлежать `telegram-publisher`, а `.env` иметь режим `0600`. Не запускайте application process от root.
+Весь рабочий каталог должен принадлежать `edizora`, а `.env` иметь режим `0600`. Не запускайте application process от root.

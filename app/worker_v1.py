@@ -164,12 +164,13 @@ async def main(args):
 
 def run():
     import os
-    parser=argparse.ArgumentParser(description="Зарегистрированный исходящий AI-worker Publisher")
+    parser=argparse.ArgumentParser(description="Зарегистрированный исходящий AI-worker Edizora")
     parser.add_argument("--pair",action="store_true")
     parser.add_argument("--server")
     parser.add_argument("--provider",choices=["lmstudio","ollama","openai"],default="lmstudio")
     parser.add_argument("--config",type=Path,default=Path("bot-settings.toml"))
-    parser.add_argument("--state-dir",type=Path,default=Path(os.environ.get("LOCALAPPDATA",str(Path.home()/".local/share")))/"Publisher"/"worker")
+    from app.branding import default_data_root
+    parser.add_argument("--state-dir",type=Path,default=default_data_root()/"worker")
     parser.add_argument("--once",action="store_true")
     try:asyncio.run(main(parser.parse_args()))
     except KeyboardInterrupt:pass

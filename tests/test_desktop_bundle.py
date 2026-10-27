@@ -38,7 +38,7 @@ async def test_real_executable_runtime_ai_and_clean_shutdown(tmp_path):
                 break
             if process.poll() is not None:
                 break
-            log = tmp_path / 'logs/publisher.log'
+            log = tmp_path / 'logs/edizora.log'
             if log.exists() and 'ERROR root' in log.read_text(encoding='utf-8', errors='replace'):
                 break
             await asyncio.sleep(.2)
@@ -54,8 +54,10 @@ async def test_real_executable_runtime_ai_and_clean_shutdown(tmp_path):
             status = await client.get('/api/v1/desktop/status')
             assert status.status_code == 200, status.text
             assert status.json()['telegram_configured'] is False
+            assert status.json()['version'] == '0.1'
             page = await client.get('/')
             assert page.status_code == 200 and 'assets/' in page.text
+            assert '<title>Edizora</title>' in page.text
 
             class AIHandler(BaseHTTPRequestHandler):
                 def log_message(self, *args):
@@ -108,7 +110,10 @@ async def test_real_executable_runtime_ai_and_clean_shutdown(tmp_path):
                     break
                 await asyncio.sleep(.5)
             assert publication.get('title_translation') == 'Test title', publication
-            assert (await client.get('/api/v1/desktop/report')).status_code == 200
+            report = await client.get('/api/v1/desktop/report')
+            assert report.status_code == 200
+            assert report.json()['application'] == 'Edizora'
+            assert report.json()['version'] == '0.1'
 
             # A second application launch must reuse this host and exit.
             repeated = subprocess.Popen([executable, '--background'], env=environment,

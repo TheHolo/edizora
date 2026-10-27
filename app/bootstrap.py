@@ -126,7 +126,7 @@ async def bootstrap(
             await connector.close()
             connector = None
         http = aiohttp.ClientSession(
-            timeout=timeout, headers={"User-Agent": "TelegramImagePublisher/0.1"},
+            timeout=timeout, headers={"User-Agent": "Edizora/0.1"},
             connector=connector, proxy=default_proxy,
         )
         cleanup.push_async_callback(http.close)

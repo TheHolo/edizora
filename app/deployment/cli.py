@@ -15,7 +15,7 @@ from app.host.control import ControlStore
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Trusted Publisher installation commands")
+    parser = argparse.ArgumentParser(description="Trusted Edizora installation commands")
     parser.add_argument("--control-dir", type=Path, default=Path(os.environ.get("PUBLISHER_CONTROL_DIR", "control")))
     commands = parser.add_subparsers(dest="command", required=True)
     initialize = commands.add_parser("initialize")

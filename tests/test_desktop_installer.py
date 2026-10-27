@@ -26,7 +26,7 @@ async def test_install_upgrade_backup_and_uninstall_preserve_data(tmp_path):
         return subprocess.run(command, env=environment, timeout=90, creationflags=subprocess.CREATE_NO_WINDOW, check=True)
 
     await asyncio.to_thread(execute, arguments)
-    assert (program / 'Publisher.exe').is_file()
+    assert (program / 'edizora.exe').is_file()
     assert (program / '_internal/frontend/dist/index.html').is_file()
     assert not (program / '.env').exists()
     await asyncio.to_thread(execute, arguments)
@@ -35,8 +35,8 @@ async def test_install_upgrade_backup_and_uninstall_preserve_data(tmp_path):
     assert len(backups) == 1
     await asyncio.to_thread(execute, [str(program / 'unins000.exe'), '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/LOG=' + str(tmp_path / 'uninstall.log')])
     for _ in range(100):
-        if not (program / 'Publisher.exe').exists():
+        if not (program / 'edizora.exe').exists():
             break
         await asyncio.sleep(.1)
-    assert not (program / 'Publisher.exe').exists()
+    assert not (program / 'edizora.exe').exists()
     assert sentinel.read_text(encoding='utf-8') == 'preserve this user material'

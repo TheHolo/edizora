@@ -17,7 +17,7 @@ async def restore_initial(store, auth, data, body):
     source = Path(body.backup).resolve()
     manifest = verify_snapshot(source)
     if manifest['schema_version'] != SCHEMA_VERSION:
-        raise ValueError('Копия создана другой версией схемы. Для восстановления нужен совместимый выпуск Publisher')
+        raise ValueError('Копия создана другой версией схемы. Для восстановления нужен совместимый выпуск Edizora')
     with closing(sqlite3.connect(safe_path(source, manifest['database_key']).as_uri() + '?mode=ro', uri=True)) as db:
         user = db.execute('SELECT id FROM users WHERE telegram_user_id=? AND is_active=1 AND is_admin=1', (body.admin_id,)).fetchone()
     if not user:

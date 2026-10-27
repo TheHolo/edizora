@@ -13,6 +13,7 @@ def start_tray(root):
         return None  # Source-mode development does not require desktop extras.
     from PIL import Image, ImageDraw
     from app.process import module_command
+    from app.branding import APP_VERSION
     image = Image.new('RGBA', (64, 64), '#315e46')
     draw = ImageDraw.Draw(image)
     for x, y in [(14, 14), (35, 14), (14, 35), (35, 35)]:
@@ -25,10 +26,10 @@ def start_tray(root):
     def open_logs():
         os.startfile(root / 'logs')
 
-    icon = pystray.Icon('Publisher', image, 'Publisher — работает на этом компьютере', pystray.Menu(
-        pystray.MenuItem('Открыть Publisher', lambda: launch(), default=True),
+    icon = pystray.Icon('Edizora', image, f'Edizora {APP_VERSION} — работает на этом компьютере', pystray.Menu(
+        pystray.MenuItem('Открыть Edizora', lambda: launch(), default=True),
         pystray.MenuItem('Открыть диагностику', open_logs),
         pystray.Menu.SEPARATOR,
-        pystray.MenuItem('Остановить Publisher', lambda: launch('--stop'))))
-    threading.Thread(target=icon.run, name='publisher-tray', daemon=True).start()
+        pystray.MenuItem('Остановить Edizora', lambda: launch('--stop'))))
+    threading.Thread(target=icon.run, name='edizora-tray', daemon=True).start()
     return icon
