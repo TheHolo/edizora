@@ -1,5 +1,11 @@
 // Interface catalog. Russian source keys preserve the existing Russian wording.
 export const english: Record<string, string> = {
+  "Изображения и предпросмотр обновляются автоматически…": "Images and preview are updating automatically…",
+  "Не удалось обновить предпросмотр": "Could not update the preview",
+  "Не удалось загрузить изображения или обновить предпросмотр. Проверьте источник и повторите загрузку.": "Could not load images or update the preview. Check the source and retry.",
+  "Повторить загрузку": "Retry loading",
+  "Предпросмотр обновится автоматически после загрузки изображений.": "The preview will update automatically once the images are loaded.",
+
   "Нет связи с панелью. Введённые данные сохранены в открытой вкладке. Проверьте соединение и повторите действие.": "Cannot reach the panel. Your input is preserved in this tab. Check your connection and try again.",
   "Войдите, чтобы продолжить работу.": "Sign in to continue.",
   "Нет разрешения на это действие.": "You do not have permission to do this.",

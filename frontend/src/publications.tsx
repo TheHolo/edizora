@@ -133,8 +133,9 @@ interface Draft { title:string; title_translation:string; description:string; bo
 function draftFrom(job:Publication):Draft{return {title:job.title||'',title_translation:job.title_translation||'',description:job.description||'',body:job.body||job.text||'',caption_override:job.caption_override||job.manual_caption||'',user_tags:(job.user_tags||job.tags||[]).join(' '),channel_id:String(job.channel?.id||job.channel_id||'')};}
 
 export function Editor({id,channels,timezone}:PageProps & {id:string}) {
-  const query=useQuery<Publication>('/publications/'+id);
-  const preview=useQuery<Preview>(query.data?'/publications/'+id+'/preview?version='+query.data.version:null);
+  const query=useQuery<Publication>('/publications/'+id,2000);
+  const preview=useQuery<Preview>(query.data?'/publications/'+id+'/preview?version='+query.data.version:null,2000);
+  const preparationOperation=useQuery<Operation>(query.data?.last_operation_id&&!query.data.readiness?.ready?'/operations/'+query.data.last_operation_id:null,2000);
   const [draft,setDraft]=useState<Draft|null>(null); const [saved,setSaved]=useState<Draft|null>(null);
   const [assets,setAssets]=useState<Asset[]>([]); const [activeTab,setActiveTab]=useState('fields');
   const [saveState,setSaveState]=useState('saved'); const [saveError,setSaveError]=useState<unknown>(null); const [conflict,setConflict]=useState(false);
@@ -150,11 +151,20 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
   currentJob.current=query.data;
   const historyQuery=useQuery<{events:EventRecord[];publications:{id:ID;message_ids:number[];published_at:string}[]}>(historyOpen?'/publications/'+id+'/history':null);
   const dirty=!!draft&&!!saved&&JSON.stringify(draft)!==JSON.stringify(saved);
+  const preparationFailed=!query.data?.readiness?.ready&&preparationOperation.data?.id===query.data?.last_operation_id&&preparationOperation.data?.kind==='prepare'&&['failed','waiting_user','cancelled'].includes(preparationOperation.data.status);
+  const preparationReasons=query.data?.readiness?.reasons?.filter(reason=>!['Медиа ещё не подготовлены на активном узле','Требуется подготовить предпросмотр'].includes(reason))||[];
+  const readinessMessage=preparationReasons.length?preparationReasons.join(' · '):preparationFailed?t("Не удалось обновить предпросмотр"):t("Изображения и предпросмотр обновляются автоматически…");
   const editable=query.data?.status==='waiting_confirmation';
   const captionEditable=['waiting_confirmation','queued','scheduled'].includes(query.data?.status||'');
   useEffect(()=>{
     if(query.data&&loaded.current!==id){loaded.current=id;setDraft(draftFrom(query.data));setSaved(draftFrom(query.data));setAssets(query.data.assets||query.data.album?.items||[]);}
   },[query.data,id]);
+  useEffect(()=>{
+    // Background downloads update thumbnails without replacing local selection or fields.
+    if(!query.data?.assets)return;
+    const fresh=new Map(query.data.assets.map(asset=>[asset.id,asset]));
+    setAssets(previous=>previous.map(asset=>{const updated=fresh.get(asset.id);return updated?{...asset,state:updated.state,thumbnail_url:updated.thumbnail_url}:asset;}));
+  },[query.data?.assets]);
   useEffect(()=>{
     setUnsaved(dirty);
     const warn=(e:BeforeUnloadEvent)=>{if(dirty){e.preventDefault();e.returnValue='';}};
@@ -253,7 +263,8 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
     {conflict&&<div className="notice amber"><div><strong>{t("Ваш текст остался в редакторе.")}</strong><p>{t("Можно загрузить серверный вариант или явно применить ваши поля к актуальной версии.")}</p><div className="button-row"><button onClick={()=>{
       if(confirm(t("Заменить введённые поля текущим вариантом сервера?")))void command.run(()=>api<Publication>('/publications/'+id),fresh=>{query.setData(fresh);setDraft(draftFrom(fresh));setSaved(draftFrom(fresh));setConflict(false);setSaveError(null);setSaveState('saved');});
     }}>{t("Загрузить серверный вариант")}</button><button onClick={()=>void applyLocalToLatest()}>{t("Применить мои поля")}</button></div></div></div>}
-    <div className="editor-summary"><Status value={job.status} uncertain={typeof job.error==='object'&&job.error?.code==='uncertain_publish'}/><span className="small muted">{t("Версия ")}{job.version}</span><span className={'readiness '+(job.readiness?.ready?'ready':'')}>{job.readiness?.ready?<Check size={16}/>:<Clock3 size={16}/>} {job.readiness?.ready?t("Готово к публикации"):job.readiness?.reasons?.join(' · ')||job.blocked_reason||t("Материал требует подготовки")}</span></div>
+    {preparationFailed&&<div className="notice amber"><p>{t("Не удалось загрузить изображения или обновить предпросмотр. Проверьте источник и повторите загрузку.")} <Link href={'/operations/'+preparationOperation.data!.id}>{t("Открыть подробности")}</Link></p><button onClick={()=>void preparation('prepare')} disabled={command.busy}>{t("Повторить загрузку")}</button></div>}
+    <div className="editor-summary"><Status value={job.status} uncertain={typeof job.error==='object'&&job.error?.code==='uncertain_publish'}/><span className="small muted">{t("Версия ")}{job.version}</span><span className={'readiness '+(job.readiness?.ready?'ready':'')}>{job.readiness?.ready?<Check size={16}/>:<Clock3 size={16}/>} {job.readiness?.ready?t("Готово к публикации"):readinessMessage}</span></div>
     <div className="mobile-editor-tabs tabs" role="tablist" aria-label={t("Редактор")}>{[{id:'media',label:t("Медиа")},{id:'fields',label:t("Поля")},{id:'preview',label:t("Предпросмотр")}].map(tab=><button key={tab.id} role="tab" aria-selected={activeTab===tab.id} className={activeTab===tab.id?'active':''} onClick={()=>setActiveTab(tab.id)}>{tab.label}</button>)}</div>
     <div className={'editor-grid tab-'+activeTab}>
       <Panel title={t("Изображения")} className="editor-media">
@@ -295,7 +306,7 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
         <label>{t("Пользовательские теги")}<input value={draft.user_tags} disabled={!captionEditable} onChange={e=>field('user_tags',e.target.value)} placeholder="#art #night"/></label>
         <label>{t("Ручная подпись")}<textarea value={draft.caption_override} disabled={!captionEditable} rows={3} onChange={e=>field('caption_override',e.target.value)} placeholder={t("Оставьте пустым для автоматического оформления")}/></label>
         <details><summary>{t("Источник и автор")}</summary><dl className="details-list"><dt>{t("Источник")}</dt><dd>{safeURL(job.source?.url)?<a href={safeURL(job.source?.url)} target="_blank" rel="noreferrer">{job.source?.url}</a>:'—'}</dd><dt>{t("Автор")}</dt><dd>{job.source?.author||'—'}</dd><dt>{t("Обновлено")}</dt><dd>{date(job.updated_at,timezone)}</dd></dl></details>
-        <div className="button-row"><button onClick={()=>void preparation('prepare')} disabled={command.busy||!allowed('prepare')}><Sparkles size={16}/>{t("Подготовить")}</button><button onClick={()=>void preparation('translate-title')} disabled={command.busy||!editable}>{t("Перевести название")}</button>{allowed('reimport')&&<button onClick={()=>void preparation('reimport')} disabled={command.busy||!editable}>{t("Обновить каталог")}</button>}<button onClick={()=>void save()} disabled={!dirty||saveState==='saving'}><Save size={16}/>{t("Сохранить")}</button></div>
+        <div className="button-row"><button onClick={()=>void preparation('translate-title')} disabled={command.busy||!editable}>{t("Перевести название")}</button>{allowed('reimport')&&<button onClick={()=>void preparation('reimport')} disabled={command.busy||!editable}>{t("Обновить каталог")}</button>}<button onClick={()=>void save()} disabled={!dirty||saveState==='saving'}><Save size={16}/>{t("Сохранить")}</button></div>
         <button className="text-button" onClick={()=>setHistoryOpen(v=>!v)}><History size={15}/>{historyOpen?t("Скрыть историю"):t("История изменений")}</button>
         {historyOpen&&<><ErrorBlock error={historyQuery.error}/><ul className="event-list">{historyQuery.data?.events?.map((event,i)=><li key={event.seq||i}><time>{date(event.created_at||event.timestamp,timezone,true)}</time><span>{event.message||event.action||event.status}</span></li>)}</ul>{historyQuery.data?.publications?.map(publication=><p className="small muted" key={publication.id}>{t("Отправлено: ")}{date(publication.published_at,timezone)} {t(" · ID сообщений: ")}{publication.message_ids.join(', ')}</p>)}</>}
       </Panel>
@@ -308,14 +319,14 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
           </div>
           {preview.data?.character_count!==undefined&&<p className="muted small align-right">{t("Символов: ")}{preview.data.character_count}{preview.data.character_limit?' / '+preview.data.character_limit:''}</p>}
           {preview.data?.warnings?.map(warning=><p className="notice amber" key={warning}>{warning}</p>)}
-          <p className="muted tiny">{preview.data?.assets_prepared?t("Подготовленный план версии ")+(preview.data?.job_version||preview.data?.version||job.version):t("Предварительный расчёт. Для публикации требуется подготовка.")} {t(" Перед действием изменения сохранятся.")}</p>
+          <p className="muted tiny">{preview.data?.assets_prepared?t("Подготовленный план версии ")+(preview.data?.job_version||preview.data?.version||job.version):t("Предпросмотр обновится автоматически после загрузки изображений.")} {t(" Перед действием изменения сохранятся.")}</p>
         </>}
       </Panel>
     </div>
     <ErrorBlock error={command.error}/>
     {scheduleOpen&&<Panel title={t("Точное время публикации")}><p className="muted">{t("Не раньше выбранного момента · ")}{timezone}</p><div className="inline-form"><label>{t("Дата и время")}<input type="datetime-local" value={scheduleInput} onChange={e=>{setScheduleInput(e.target.value);setChosenInstant('');}}/></label>{candidates.length>1&&<label>{t("Уточните момент")}<select value={chosenInstant} onChange={e=>setChosenInstant(e.target.value)}><option value="">{t("Время встречается дважды")}</option>{candidates.map(candidate=><option value={candidate} key={candidate}>{candidate} UTC</option>)}</select></label>}<button className="primary" disabled={command.busy||!candidates.length||(candidates.length>1&&!chosenInstant)} onClick={()=>void action('schedule',{scheduled_at:chosenInstant||candidates[0],timezone})}>{t("Запланировать")}</button><button onClick={()=>setScheduleOpen(false)}>{t("Закрыть")}</button></div>{scheduleInput&&!candidates.length&&<p className="inline-error">{t("Такого местного времени нет в выбранном часовом поясе. Выберите другое.")}</p>}</Panel>}
     {resolveOpen&&<Panel title={t("Ручная проверка результата")}><p>{t("Проверьте канал и известные сообщения. Это действие записывает ваше заключение и само ничего не отправляет.")}</p><label>{t("Результат")}<select value={resolution} onChange={e=>setResolution(e.target.value as typeof resolution)}><option value="still_unknown">{t("Пока неизвестно")}</option><option value="published">{t("Отправлено")}</option><option value="not_published">{t("Точно не отправлено")}</option><option value="partial">{t("Отправлена только часть")}</option></select></label><label>{t("Известные ID сообщений")}<input value={knownIDs} onChange={e=>setKnownIDs(e.target.value)} placeholder={t("Через пробел")}/></label><label>{t("Примечание")}<textarea value={note} onChange={e=>setNote(e.target.value)} rows={2}/></label><button onClick={()=>void action('resolve-uncertain',{outcome:resolution,note,message_ids:knownIDs.split(/[\s,]+/).filter(Boolean).map(Number)} satisfies Omit<import('./types').API['UncertainResolution'],'expected_version'>)} disabled={command.busy}>{t("Сохранить заключение")}</button></Panel>}
-    <footer className="editor-footer"><span className="muted small">{job.blocked_reason||(!job.readiness?.ready?job.readiness?.reasons?.join(' · '):t("Черновик готов к следующему шагу"))}</span><div className="button-row">
+    <footer className="editor-footer"><span className="muted small">{!job.readiness?.ready?readinessMessage:t("Черновик готов к следующему шагу")}</span><div className="button-row">
       {allowed('return-to-draft')&&<button onClick={()=>void action('return-to-draft')} disabled={command.busy}>{t("Вернуть в черновик")}</button>}
       {allowed('resolve-uncertain')&&<button onClick={()=>setResolveOpen(true)}>{t("Проверить результат")}</button>}
       {allowed('confirm-duplicate')&&<button onClick={()=>{if(confirm(t("Разрешить сознательный повтор этого источника в выбранном канале? Само подтверждение ничего не отправляет.")))void action('confirm-duplicate');}} disabled={command.busy}>{t("Разрешить повтор источника")}</button>}

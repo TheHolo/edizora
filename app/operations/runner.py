@@ -1,7 +1,10 @@
 import asyncio
+import time
 from uuid import uuid4
 from sqlalchemy import select, text
-from app.db.models import Operation, OperationEvent, Job, MediaAsset, JobAsset, NewsTask, utcnow
+from sqlalchemy.orm import selectinload
+from app.db.models import ApplicationState, Operation, OperationEvent, Job, MediaAsset, JobAsset, NewsTask, utcnow
+from app.application.platform import channel_render_hash
 from app.services.job_service import serialize_post
 from app.services.preview_service import deserialize_post
 from app.domain.album import read_album
@@ -35,11 +38,15 @@ class OperationRunner:
             await self.task
 
     async def run(self):
+        next_preparation_check=0
         while not self.stopping:
             if self.platform.gate:
                 try:self.platform.gate.assert_mutation_allowed()
                 except RuntimeError:
                     await asyncio.sleep(.25);continue
+            if time.monotonic()>=next_preparation_check:
+                await self._queue_preparations()
+                next_preparation_check=time.monotonic()+1
             async with self.platform.sessions() as session:
                 op=await session.scalar(select(Operation).where(Operation.status=="queued",Operation.kind.in_(["import","prepare","title_translation","reimport","telegram_preview"])).order_by(Operation.created_at).limit(1))
                 operation_id=op.id if op else None
@@ -58,6 +65,35 @@ class OperationRunner:
                 uncertain = getattr(error,'code','') == 'uncertain_publish'
                 await self._event(operation_id,"waiting_user" if uncertain else "failed","failed","Результат Telegram неизвестен; проверьте личный чат" if uncertain else "Не удалось выполнить операцию. Проверьте источник и повторите",error={"code":getattr(error,"code",type(error).__name__),"message":"Операция не завершена; сохранённые данные доступны"})
             finally:self.active_operation=None
+
+    async def _queue_preparations(self):
+        """Prepare each saved revision once, including drafts created before startup.
+
+        Failed downloads stay visible and require an explicit retry; editing a
+        draft creates a new revision. Scheduling never grants publication rights.
+        """
+        async with self.platform.sessions() as session:
+            await session.execute(text("BEGIN IMMEDIATE"))
+            state=await session.get(ApplicationState,1)
+            if state and state.maintenance_state!="normal":
+                await session.rollback();return
+            jobs=(await session.scalars(select(Job).options(selectinload(Job.channel)).where(
+                Job.status=="waiting_confirmation"))).all()
+            for job in jobs:
+                if job.content_kind=="artwork" and not job.post_data.get("media_items"):continue
+                fingerprint=channel_render_hash(job.channel)
+                plan=job.render_plan or {}
+                if plan.get("job_version")==job.version and (
+                    plan.get("channel_render_hash")==fingerprint if "channel_render_hash" in plan
+                    else plan.get("channel_version")==job.channel.version):continue
+                previous=(await session.scalars(select(Operation).where(
+                    Operation.job_id==job.id,Operation.kind=="prepare",
+                    Operation.payload["job_version"].as_integer()==job.version))).all()
+                if any(op.payload.get("channel_render_hash",fingerprint)==fingerprint for op in previous):continue
+                self.platform._new_operation(session,job.created_by_user_id,"prepare",
+                    {"job_version":job.version,"channel_render_hash":fingerprint,"automatic":True},
+                    "Загружаем изображения и обновляем предпросмотр",job_id=job.id)
+            await session.commit()
 
     async def _event(self,operation_id,status,stage,message,*,progress=None,result=None,error=None):
         async with self.platform.sessions() as session,session.begin():
@@ -133,6 +169,7 @@ class OperationRunner:
                 links=list((await session.execute(select(JobAsset,MediaAsset).join(MediaAsset,JobAsset.asset_id==MediaAsset.id).where(JobAsset.job_id==job.id,JobAsset.selected.is_(True)).order_by(JobAsset.sort_order))).all())
             original_version=job.version
             original_status=job.status
+            original_channel_hash=channel_render_hash(job.channel)
             settings=await self.platform.effective_settings(session)
             if job.content_kind=='artwork' and settings['pixiv_media_limit_enabled'] and len(links)>settings['pixiv_max_images']:
                 raise ValueError('selection_limit')
@@ -178,7 +215,7 @@ class OperationRunner:
             manifest.append(entry)
         async with self.platform.sessions() as session,session.begin():
             current=await self.platform._job(session,job.id)
-            if current.version!=original_version or current.status!=original_status:
+            if current.version!=original_version or current.status!=original_status or channel_render_hash(current.channel)!=original_channel_hash:
                 raise ValueError("stale_job")
             plan=self.platform.render_plan(current,settings=await self.platform.effective_settings(session))
             plan['assets_prepared']=True

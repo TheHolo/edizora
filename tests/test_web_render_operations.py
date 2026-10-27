@@ -92,3 +92,177 @@ async def test_interrupted_personal_preview_never_automatically_replays(tmp_path
         assert operation['error']['code']=='uncertain_publish'
         assert operation['allowed_actions']==[]
     finally:await engine.dispose()
+
+
+async def test_background_preparation_downloads_imported_draft_and_refreshes_edits(tmp_path):
+    import asyncio
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+    from app.domain.models import SourcePost, MediaItem, DownloadedMedia
+    from app.services.job_service import serialize_post
+    from app.db.models import Job
+
+    engine,sessions,platform=await setup_platform(tmp_path)
+    image=tmp_path/'source.png'
+    Image.new('RGB',(12,12),'green').save(image)
+    item=MediaItem(url='https://example.org/image.png',filename='image.png',order=0)
+    post=SourcePost(provider='pixiv',source_id='123',source_url='https://example.org/post',
+        normalized_url='https://example.org/post',title='Artwork',author_name='Artist',author_url='',
+        media_items=[item,MediaItem(url='https://example.org/second.png',filename='second.png',order=1)])
+    downloader=AsyncMock(return_value=DownloadedMedia(source=item,path=image,mime_type='image/png',size=image.stat().st_size))
+    runtime=SimpleNamespace(workers=SimpleNamespace(downloader=SimpleNamespace(download=downloader)))
+    # A persisted draft from before startup also gets prepared without a browser command.
+    async with sessions() as session,session.begin():
+        job=Job(created_by_user_id=1,target_channel_id=1,provider=post.provider,source_id=post.source_id,
+            source_url=post.source_url,normalized_url=post.normalized_url,content_kind='artwork',
+            status='waiting_confirmation',post_data=serialize_post(post),user_tags=[],source_tags=[],max_attempts=3)
+        session.add(job);await session.flush();job_id=job.id
+    runner=OperationRunner(platform,runtime)
+    async with sessions() as session,session.begin():
+        await runner._catalog(session,await session.get(Job,job_id))
+    initial=await platform.get_publication(1,job_id)
+    first_id,second_id=[asset['id'] for asset in initial['assets']]
+    await platform.patch_publication(1,job_id,{'expected_version':initial['version'],'selected_asset_ids':[first_id]})
+    async def ready():
+        async with asyncio.timeout(8):
+            while True:
+                dto=await platform.get_publication(1,job_id)
+                if dto['readiness']['ready']:return dto
+                await asyncio.sleep(.05)
+    try:
+        await runner.start()
+        prepared=await ready()
+        assert prepared['assets'][0]['state']=='available'
+        assert prepared['assets'][0]['thumbnail_url']
+        downloader.assert_awaited_once()
+        changed=await platform.patch_publication(1,job_id,{'expected_version':prepared['version'],'caption_override':'Edited caption'})
+        assert not changed['readiness']['ready']
+        refreshed=await ready()
+        assert refreshed['version']>=changed['version']
+        assert (await platform.preview(1,job_id))['html']=='Edited caption'
+        downloader.assert_awaited_once()  # Existing images are reused for new revisions.
+        assert refreshed['status']=='waiting_confirmation'  # Never enqueue or send automatically.
+        await platform.patch_publication(1,job_id,{'expected_version':refreshed['version'],'selected_asset_ids':[second_id]})
+        selected=await ready()
+        assert [asset['id'] for asset in selected['assets'] if asset['selected']]==[second_id]
+        assert all(asset['thumbnail_url'] for asset in selected['assets'])
+        assert downloader.await_count==2  # Newly selected images also load automatically.
+    finally:
+        await runner.stop();await engine.dispose()
+
+
+async def test_automatic_preparation_deduplicates_failures_and_retries_new_revisions(tmp_path):
+    from sqlalchemy import select
+    engine,sessions,platform=await setup_platform(tmp_path)
+    try:
+        created=await platform.create_publication(1,{'content_kind':'text','channel_id':1,'body':'Draft'},str(uuid4()))
+        runner=OperationRunner(platform)
+        await runner._queue_preparations();await runner._queue_preparations()
+        async with sessions() as session,session.begin():
+            operations=(await session.scalars(select(Operation).where(Operation.kind=='prepare'))).all()
+            assert len(operations)==1
+            operations[0].status='failed'
+        await runner._queue_preparations()
+        async with sessions() as session:
+            assert len((await session.scalars(select(Operation).where(Operation.kind=='prepare'))).all())==1
+        dto=await platform.get_publication(1,created['publication_id'])
+        await platform.patch_publication(1,dto['id'],{'expected_version':dto['version'],'body':'New revision'})
+        await runner._queue_preparations()
+        async with sessions() as session:
+            operations=(await session.scalars(select(Operation).where(Operation.kind=='prepare').order_by(Operation.created_at))).all()
+            assert len(operations)==2
+            assert operations[0].payload['job_version']!=operations[1].payload['job_version']
+        await runner._prepare(operations[1].id)
+        assert (await platform.get_publication(1,dto['id']))['readiness']['ready']
+    finally:await engine.dispose()
+
+
+async def test_import_automatically_downloads_and_exposes_retry_after_source_failure(tmp_path):
+    import asyncio
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+    from sqlalchemy import select
+    from app.domain.models import SourcePost, MediaItem, DownloadedMedia
+
+    engine,sessions,platform=await setup_platform(tmp_path)
+    image=tmp_path/'source.png'
+    Image.new('RGB',(12,12),'blue').save(image)
+    item=MediaItem(url='https://example.org/image.png',filename='image.png',order=0)
+    post=SourcePost(provider='pixiv',source_id='123',source_url='https://example.org/post',
+        normalized_url='https://example.org/post',title='Artwork',author_name='Artist',author_url='',media_items=[item])
+    downloader=AsyncMock(side_effect=[OSError('Source unavailable'),
+        DownloadedMedia(source=item,path=image,mime_type='image/png',size=image.stat().st_size)])
+    runtime=SimpleNamespace(ingest=SimpleNamespace(fetch=AsyncMock(return_value=post)),
+        workers=SimpleNamespace(downloader=SimpleNamespace(download=downloader)))
+    created=await platform.create_publication(1,{'content_kind':'artwork','channel_id':1,'source_url':post.source_url},str(uuid4()))
+    runner=OperationRunner(platform,runtime)
+    try:
+        await runner.start()
+        async with asyncio.timeout(8):
+            while True:
+                async with sessions() as session:
+                    failed=await session.scalar(select(Operation).where(Operation.kind=='prepare',Operation.status=='failed'))
+                if failed:break
+                await asyncio.sleep(.05)
+        imported=await platform.operation(1,created['operation_id'])
+        assert imported['status']=='succeeded'
+        job_id=imported['result']['publication_id']
+        dto=await platform.get_publication(1,job_id)
+        assert dto['last_operation_id']==failed.id
+        assert not dto['readiness']['ready']
+        await runner._queue_preparations()
+        downloader.assert_awaited_once()  # No endless background retry of an unavailable source.
+        retry=await platform.prepare(1,job_id,'prepare',{'expected_version':dto['version']},str(uuid4()))
+        async with asyncio.timeout(8):
+            while not (await platform.get_publication(1,job_id))['readiness']['ready']:
+                await asyncio.sleep(.05)
+        assert (await platform.operation(1,retry['operation_id']))['status']=='succeeded'
+        assert downloader.await_count==2
+        assert (await platform.list_publications(1))['total']==1
+    finally:
+        await runner.stop();await engine.dispose()
+
+
+async def test_channel_edit_during_download_automatically_rebuilds_current_plan(tmp_path):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+    from sqlalchemy import select
+    import pytest
+    from app.db.models import Job
+    from app.domain.models import SourcePost, MediaItem, DownloadedMedia
+    from app.services.job_service import serialize_post
+
+    engine,sessions,platform=await setup_platform(tmp_path)
+    image=tmp_path/'source.png'
+    Image.new('RGB',(12,12),'blue').save(image)
+    item=MediaItem(url='https://example.org/image.png',filename='image.png',order=0)
+    post=SourcePost(provider='pixiv',source_id='123',source_url='https://example.org/post',
+        normalized_url='https://example.org/post',title='Artwork',author_name='Artist',author_url='',media_items=[item])
+    async def download(*args):
+        channel=await platform.get_channel(1,1)
+        await platform.patch_channel(1,1,{'expected_version':channel['version'],'publish_mode':'document'})
+        return DownloadedMedia(source=item,path=image,mime_type='image/png',size=image.stat().st_size)
+    downloader=AsyncMock(side_effect=download)
+    runner=OperationRunner(platform,SimpleNamespace(workers=SimpleNamespace(downloader=SimpleNamespace(download=downloader))))
+    try:
+        async with sessions() as session,session.begin():
+            job=Job(created_by_user_id=1,target_channel_id=1,provider=post.provider,source_id=post.source_id,
+                source_url=post.source_url,normalized_url=post.normalized_url,content_kind='artwork',
+                status='waiting_confirmation',post_data=serialize_post(post),user_tags=[],source_tags=[],max_attempts=3)
+            session.add(job);await session.flush();job_id=job.id
+        await runner._queue_preparations()
+        async with sessions() as session:
+            original=await session.scalar(select(Operation).where(Operation.kind=='prepare'))
+        with pytest.raises(ValueError,match='stale_job'):
+            await runner._prepare(original.id)
+        assert not (await platform.get_publication(1,job_id))['readiness']['ready']
+        await runner._queue_preparations()
+        async with sessions() as session:
+            updated=await session.scalar(select(Operation).where(Operation.kind=='prepare',Operation.id!=original.id))
+        assert updated is not None
+        await runner._prepare(updated.id)
+        plan=await platform.preview(1,job_id)
+        assert plan['parts'][0]['method']=='sendDocument'
+        assert (await platform.get_publication(1,job_id))['readiness']['ready']
+        downloader.assert_awaited_once()
+    finally:await engine.dispose()
