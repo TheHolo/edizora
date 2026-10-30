@@ -22,15 +22,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File deploy/build-desktop.ps1 -Co
 ```
 
 Результат: `output/desktop/edizora.exe`, SHA-256 и папка `bundle/edizora` для проверки самостоятельного запуска. Сборщик не читает `.env`, рабочие БД или storage; release ZIP формируется по штатному списку файлов исходников.
+Если среда сборки расположена отдельно от исходников, путь к её Python можно передать через `-Python`.
 
 ```powershell
 python -m pytest tests/test_desktop.py -q
-$env:EDIZORA_TEST_EXECUTABLE = (Resolve-Path output/desktop/bundle/edizora/edizora.exe).Path
+$env:PUBLISHER_TEST_EXECUTABLE = (Resolve-Path output/desktop/bundle/edizora/edizora.exe).Path
 python -m pytest tests/test_desktop_bundle.py -q
 npm --prefix frontend run test:client
 ```
 
 Для проверок legacy используйте `EDIZORA_TEST_TMP_ROOT` вне OneDrive. В ограниченной среде также задайте доступные TEMP/TMP и UV_CACHE_DIR.
+
+## Автоматическая сборка после push
+
+При каждом push в любую ветку или тега GitHub Actions запускает [Windows installer](https://github.com/TheHolo/edizora/actions/workflows/windows-installer.yml). Сборку можно запустить вручную на той же странице через **Run workflow**. Отдельный запуск привязан к конкретному коммиту; более новый push не отменяет предыдущий.
+
+На Windows Server 2022 workflow устанавливает Node.js 24 и Python 3.14, восстанавливает зависимости из `package-lock.json` и `uv.lock`, проверяет и собирает интерфейс, запускает тесты, затем вызывает `deploy/build-desktop.ps1`. Скрипт использует PyInstaller и установленный на runner Inno Setup. После сборки запускается изолированный тест упакованного приложения и проверяется SHA-256 установщика.
+
+Откройте нужный запуск в **Actions**, дождитесь успешного завершения и скачайте артефакт `edizora-windows-x64-<SHA коммита>`. В архиве находятся установщик `edizora.exe` и `edizora.exe.sha256`; артефакт хранится 30 дней. Сборки из Actions не создают GitHub Release и не заменяют опубликованные версии. Как и локальная сборка, этот установщик не подписан цифровым сертификатом.
 
 ## Границы предварительного выпуска
 

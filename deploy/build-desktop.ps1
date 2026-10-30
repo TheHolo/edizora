@@ -1,12 +1,13 @@
 param(
     [string]$Compiler = '',
     [string]$Version = '0.1',
+    [string]$Python = '',
     [switch]$BundleOnly
 )
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $taskRoot
-$taskPython = Join-Path $taskRoot '.venv\Scripts\python.exe'
+$taskPython = if ($Python) { $Python } else { Join-Path $taskRoot '.venv\Scripts\python.exe' }
 if (!(Test-Path -LiteralPath $taskPython)) { throw 'Prepare the build environment with uv sync --extra news-worker --extra desktop --extra desktop-build.' }
 if (!(Test-Path 'frontend\dist\index.html')) { throw 'Build frontend before packaging.' }
 New-Item -ItemType Directory -Force -Path 'work\desktop-temp' | Out-Null

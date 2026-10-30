@@ -16,6 +16,7 @@ import httpx
 import pytest
 
 from app.desktop.launcher import SetupInput, initialize
+from app.branding import APP_VERSION
 
 EXECUTABLE = os.environ.get('PUBLISHER_TEST_EXECUTABLE')
 pytestmark = pytest.mark.skipif(not EXECUTABLE, reason='Set PUBLISHER_TEST_EXECUTABLE to test a built desktop bundle')
@@ -54,7 +55,7 @@ async def test_real_executable_runtime_ai_and_clean_shutdown(tmp_path):
             status = await client.get('/api/v1/desktop/status')
             assert status.status_code == 200, status.text
             assert status.json()['telegram_configured'] is False
-            assert status.json()['version'] == '0.1'
+            assert status.json()['version'] == APP_VERSION
             page = await client.get('/')
             assert page.status_code == 200 and 'assets/' in page.text
             assert '<title>Edizora</title>' in page.text
@@ -100,20 +101,36 @@ async def test_real_executable_runtime_ai_and_clean_shutdown(tmp_path):
             created = await client.post('/api/v1/publications/text-draft', json={'content_kind': 'text', 'channel_id': channel.json()['id'], 'title': 'Тестовое название', 'text': 'Isolated body'}, headers={'Idempotency-Key': str(uuid4())})
             assert created.status_code == 202, created.text
             job_id = created.json()['publication_id']
-            publication = (await client.get(f'/api/v1/publications/{job_id}')).json()
-            operation = await client.post(f'/api/v1/publications/{job_id}/translate-title', json={'expected_version': publication['version']}, headers={'Idempotency-Key': str(uuid4())})
-            assert operation.status_code == 202, operation.text
-            deadline = time.monotonic() + 35
+            # Automatic preparation changes the draft version; wait for it before
+            # requesting a translation tied to that version.
+            deadline = time.monotonic() + 45
             while time.monotonic() < deadline:
                 publication = (await client.get(f'/api/v1/publications/{job_id}')).json()
-                if publication.get('title_translation') == 'Test title':
+                if publication.get('readiness', {}).get('ready'):
                     break
                 await asyncio.sleep(.5)
+            assert publication.get('readiness', {}).get('ready'), publication
+            operation = await client.post(f'/api/v1/publications/{job_id}/translate-title', json={'expected_version': publication['version']}, headers={'Idempotency-Key': str(uuid4())})
+            assert operation.status_code == 202, operation.text
+            operation_id = operation.json()['operation_id']
+            deadline = time.monotonic() + 60
+            while time.monotonic() < deadline:
+                result = (await client.get(f'/api/v1/operations/{operation_id}')).json()
+                if result['status'] in {'succeeded', 'waiting_user', 'failed', 'cancelled'}:
+                    break
+                await asyncio.sleep(.5)
+            assert result['status'] in {'succeeded', 'waiting_user'}, result
+            assert result['result']['proposal']['translated_text'] == 'Test title'
+            if not result['result']['applied']:
+                publication = (await client.get(f'/api/v1/publications/{job_id}')).json()
+                applied = await client.post(f'/api/v1/operations/{operation_id}/apply', json={'expected_version': publication['version']}, headers={'Idempotency-Key': str(uuid4())})
+                assert applied.status_code == 200, applied.text
+            publication = (await client.get(f'/api/v1/publications/{job_id}')).json()
             assert publication.get('title_translation') == 'Test title', publication
             report = await client.get('/api/v1/desktop/report')
             assert report.status_code == 200
             assert report.json()['application'] == 'Edizora'
-            assert report.json()['version'] == '0.1'
+            assert report.json()['version'] == APP_VERSION
 
             # A second application launch must reuse this host and exit.
             repeated = subprocess.Popen([executable, '--background'], env=environment,

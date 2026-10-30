@@ -50,6 +50,34 @@ async def prepare(core,job):
     return await platform.get_publication(actor,job["id"])
 
 
+async def test_draft_count_includes_other_content_after_partial_import(core):
+    from app.domain.models import SourcePost
+
+    platform,_,sessions,actor,channel,*_=core
+    async with sessions() as session,session.begin():
+        second_channel=Channel(alias="other",telegram_chat_id="-1002",title="Другой",is_enabled=True,default_tags=[])
+        session.add(second_channel);await session.flush();second_channel_id=second_channel.id
+    urls=[f"https://example.org/{index}" for index in range(3)]
+    posts=[SourcePost(provider="test",source_id=str(index),source_url=url,normalized_url=url,
+        title=f"Изображение {index}",author_name="",author_url="",media_items=[]) for index,url in enumerate(urls[:2])]
+    runtime=SimpleNamespace(ingest=SimpleNamespace(fetch=AsyncMock(side_effect=[*posts,OSError("unavailable")])))
+    accepted=await platform.create_publication(actor,{"content_kind":"artwork","channel_id":channel,"urls":urls},str(uuid4()))
+    await OperationRunner(platform,runtime)._import(accepted["operation_id"])
+    operation=await platform.operation(actor,accepted["operation_id"])
+    assert operation["status"]=="waiting_user" and len(operation["result"]["publication_ids"])==2
+
+    created=await platform.create_publication(actor,{"content_kind":"text","body":"Другой черновик","channel_id":second_channel_id},str(uuid4()))
+    text_draft=await platform.get_publication(actor,created["publication_id"])
+    page=await platform.list_publications(actor,status="waiting_confirmation",limit=1)
+    assert page["total"]==3 and len(page["items"])==1 and page["next_cursor"]
+    assert (await platform.list_publications(actor,status="waiting_confirmation",channel_id=channel,limit=1))["total"]==2
+    assert (await platform.list_publications(actor,status="waiting_confirmation",channel_id=second_channel_id,limit=1))["total"]==1
+
+    ready=await prepare(core,text_draft)
+    await platform.publication_action(actor,ready["id"],"enqueue",{"expected_version":ready["version"]},str(uuid4()))
+    assert (await platform.list_publications(actor,status="waiting_confirmation",limit=1))["total"]==2
+
+
 async def test_schema_has_foreign_keys_journal_and_upgrade_is_idempotent(core):
     platform,engine,sessions,*_=core
     await create_schema(engine)

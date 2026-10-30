@@ -1,15 +1,23 @@
 """Additional adapters backed by the same application transactions and worker queue."""
 import hashlib
 import json
+import logging
 import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
+from aiogram.exceptions import (
+    TelegramAPIError, TelegramBadRequest, TelegramForbiddenError, TelegramNetworkError,
+    TelegramNotFound, TelegramRetryAfter, TelegramServerError, TelegramUnauthorizedError,
+)
 from sqlalchemy import select, text
 
 from app.application.platform import PlatformService, PlatformError, iso
 from app.db.models import AIWorker, ApplicationState, AuditEvent, Channel, NewsTask, Operation, User, utcnow
 from app.services.news_task_service import NewsTaskService, NewsTaskLeaseError
+
+
+logger = logging.getLogger(__name__)
 
 
 class WebPlatformService(PlatformService):
@@ -341,15 +349,35 @@ class WebPlatformService(PlatformService):
         async with self.sessions() as session:
             channel = await session.get(Channel, channel_id)
             chat_id = channel.telegram_chat_id
+        checking_channel = False
         try:
             me = await self.runtime.bot.get_me()
+            checking_channel = True
             membership = await self.runtime.bot.get_chat_member(chat_id, me.id)
-            can_post = membership.status in {'creator', 'administrator'} and getattr(membership, 'can_post_messages', True)
-        except Exception:
-            raise PlatformError(503, 'telegram_check_failed', 'Telegram не ответил. Предыдущие сведения сохранены.') from None
+            can_post = membership.status == 'creator' or (
+                membership.status == 'administrator' and bool(getattr(membership, 'can_post_messages', False))
+            )
+        except TelegramUnauthorizedError:
+            raise PlatformError(422, 'telegram_invalid_token', 'Telegram отклонил токен бота. Проверьте токен в настройках приложения. Предыдущие сведения сохранены.') from None
+        except (TelegramNetworkError, TimeoutError):
+            raise PlatformError(503, 'telegram_network_error', 'Не удалось связаться с Telegram. Проверьте подключение к интернету и настройки прокси, затем повторите проверку. Предыдущие сведения сохранены.') from None
+        except TelegramRetryAfter:
+            raise PlatformError(503, 'telegram_rate_limited', 'Telegram временно ограничил количество запросов. Подождите и повторите проверку. Предыдущие сведения сохранены.') from None
+        except TelegramServerError:
+            raise PlatformError(503, 'telegram_server_error', 'Telegram сообщил об ошибке на стороне сервиса. Повторите проверку позже. Предыдущие сведения сохранены.') from None
+        except (TelegramBadRequest, TelegramForbiddenError, TelegramNotFound):
+            if checking_channel:
+                raise PlatformError(422, 'telegram_channel_unavailable', 'Telegram отклонил проверку прав. Возможные причины: неверный ID или @имя канала, бот не добавлен в канал или не назначен администратором. Проверьте адрес, добавьте бота администратором с правом публикации и повторите проверку. Предыдущие сведения сохранены.') from None
+            raise PlatformError(422, 'telegram_bot_check_failed', 'Telegram отклонил запрос сведений о боте. Проверьте токен бота и повторите проверку. Предыдущие сведения сохранены.') from None
+        except TelegramAPIError:
+            raise PlatformError(503, 'telegram_check_failed', 'Telegram отклонил проверку прав, но причина не определена. Проверьте токен бота, адрес канала и доступ бота к каналу; при необходимости повторите проверку позже. Предыдущие сведения сохранены.') from None
+        except Exception as error:
+            logger.warning('channel_permission_check_failed channel_id=%s error_type=%s', channel_id, type(error).__name__)
+            raise PlatformError(503, 'telegram_check_failed', 'Не удалось проверить права бота. Причина не определена. Проверьте подключение, токен бота и доступ бота к каналу; если ошибка сохраняется, проверьте журнал приложения. Предыдущие сведения сохранены.') from None
+        checked_at = iso(utcnow())
         async with self._write(actor_id) as session:
-            self._audit(session, actor_id, 'channel.check', channel_id, can_post=bool(can_post), checked_at=iso(utcnow()))
-        return {'channel_id': channel_id, 'can_post': bool(can_post), 'checked_at': iso(utcnow())}
+            self._audit(session, actor_id, 'channel.check', channel_id, can_post=bool(can_post), checked_at=checked_at)
+        return {'channel_id': channel_id, 'can_post': bool(can_post), 'checked_at': checked_at}
 
     async def channel_statistics(self, actor_id, channel_id):
         await self.get_channel(actor_id, channel_id)

@@ -1,9 +1,14 @@
 from datetime import UTC,datetime,timedelta
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 import json
 
 import pytest
+from aiogram.exceptions import (
+    TelegramAPIError, TelegramBadRequest, TelegramForbiddenError, TelegramNetworkError,
+    TelegramNotFound, TelegramRetryAfter, TelegramServerError, TelegramUnauthorizedError,
+)
 from sqlalchemy import select,insert
 
 from app.api.extras import WebPlatformService
@@ -124,3 +129,96 @@ async def test_channel_rights_and_last_good_statistic_survive_reload(extras):
     assert item['permissions']['can_post'] is False and item['permissions']['status']=='denied'
     assert item['member_count']==130 and item['member_count_updated_at']
     assert (await service.list_channels(actor))['items'][0]['member_count']==130
+
+
+@pytest.mark.parametrize(('status','post_permission','expected'), [
+    ('creator', None, True),
+    ('administrator', True, True),
+    ('administrator', False, False),
+    ('administrator', None, False),
+    ('member', None, False),
+    ('left', None, False),
+    ('kicked', None, False),
+])
+async def test_channel_permission_result_is_recorded(extras, status, post_permission, expected):
+    service,_,actor,channel,*_=extras
+    membership=SimpleNamespace(status=status)
+    if post_permission is not None:
+        membership.can_post_messages=post_permission
+    bot=SimpleNamespace(get_me=AsyncMock(return_value=SimpleNamespace(id=42)),
+        get_chat_member=AsyncMock(return_value=membership))
+    service.runtime=SimpleNamespace(bot=bot)
+
+    result=await service.check_channel(actor,channel)
+
+    bot.get_chat_member.assert_awaited_once_with('-1001',42)
+    assert result['can_post'] is expected
+    saved=(await service.get_channel(actor,channel))['permissions']
+    assert saved['can_post'] is expected
+    assert saved['status']==('allowed' if expected else 'denied')
+    assert saved['checked_at']==result['checked_at']
+
+
+@pytest.mark.parametrize(('method','error','status','code','message'), [
+    ('get_chat_member', TelegramBadRequest(method=None,message='chat not found'), 422, 'telegram_channel_unavailable', 'не назначен администратором'),
+    ('get_chat_member', TelegramForbiddenError(method=None,message='bot was kicked'), 422, 'telegram_channel_unavailable', 'не назначен администратором'),
+    ('get_chat_member', TelegramNotFound(method=None,message='channel not found'), 422, 'telegram_channel_unavailable', 'неверный ID'),
+    ('get_me', TelegramBadRequest(method=None,message='bad request'), 422, 'telegram_bot_check_failed', 'токен бота'),
+    ('get_me', TelegramUnauthorizedError(method=None,message='invalid token'), 422, 'telegram_invalid_token', 'токен бота'),
+    ('get_chat_member', TelegramNetworkError(method=None,message='connection lost'), 503, 'telegram_network_error', 'подключение к интернету'),
+    ('get_me', TimeoutError(), 503, 'telegram_network_error', 'подключение к интернету'),
+    ('get_chat_member', TelegramRetryAfter(method=None,message='too many requests',retry_after=30), 503, 'telegram_rate_limited', 'ограничил количество запросов'),
+    ('get_chat_member', TelegramServerError(method=None,message='server error'), 503, 'telegram_server_error', 'ошибке на стороне сервиса'),
+    ('get_chat_member', TelegramAPIError(method=None,message='unexpected response'), 503, 'telegram_check_failed', 'причина не определена'),
+    ('get_chat_member', RuntimeError('secret-token'), 503, 'telegram_check_failed', 'Причина не определена'),
+])
+async def test_channel_permission_errors_explain_cause_and_keep_previous_result(extras, method, error, status, code, message):
+    service,sessions,actor,channel,*_=extras
+    previous=utcnow().isoformat()
+    async with sessions() as session,session.begin():
+        session.add(AuditEvent(actor_id=actor,action='channel.check',resource_id=str(channel),details={'can_post':True,'checked_at':previous}))
+    bot=SimpleNamespace(get_me=AsyncMock(return_value=SimpleNamespace(id=42)),
+        get_chat_member=AsyncMock(return_value=SimpleNamespace(status='administrator',can_post_messages=True)))
+    getattr(bot,method).side_effect=error
+    service.runtime=SimpleNamespace(bot=bot)
+
+    with pytest.raises(PlatformError) as raised:
+        await service.check_channel(actor,channel)
+
+    assert raised.value.status==status and raised.value.code==code
+    assert message in raised.value.message
+    assert 'Предыдущие сведения сохранены.' in raised.value.message
+    assert 'secret-token' not in raised.value.message
+    saved=(await service.get_channel(actor,channel))['permissions']
+    assert saved=={'status':'allowed','can_post':True,'checked_at':previous}
+    async with sessions() as session:
+        events=(await session.scalars(select(AuditEvent).where(AuditEvent.action=='channel.check'))).all()
+        assert len(events)==1
+
+
+async def test_channel_permission_diagnostics_reach_the_web_api(extras, tmp_path):
+    import httpx
+    from app.api.auth import AuthStore
+    from app.api.server import WebConfig, create_app
+
+    service,_,actor,channel,*_=extras
+    bot=SimpleNamespace(get_me=AsyncMock(return_value=SimpleNamespace(id=42)),
+        get_chat_member=AsyncMock(side_effect=TelegramBadRequest(method=None,message='chat not found')))
+    service.runtime=SimpleNamespace(bot=bot)
+    auth=AuthStore(tmp_path/'http-auth')
+    token=auth.exchange_local(auth.local_code(actor,1))['token']
+    app=create_app(service,auth,config=WebConfig(origin='http://localhost',admin_ids={1}))
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://localhost',
+            headers={'Authorization':'Bearer '+token,'Origin':'http://localhost'}) as client:
+        response=await client.post(f'/api/v1/channels/{channel}/check')
+        assert response.status_code==422
+        error=response.json()['error']
+        assert error['code']=='telegram_channel_unavailable' and error['retryable'] is False
+        assert 'не назначен администратором' in error['message'] and 'неверный ID' in error['message']
+
+        bot.get_chat_member.side_effect=None
+        bot.get_chat_member.return_value=SimpleNamespace(status='left')
+        response=await client.post(f'/api/v1/channels/{channel}/check')
+        assert response.status_code==200 and response.json()['can_post'] is False
+        channel_response=await client.get(f'/api/v1/channels/{channel}')
+        assert channel_response.json()['permissions']['status']=='denied'

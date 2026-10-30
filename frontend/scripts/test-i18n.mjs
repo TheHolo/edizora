@@ -77,3 +77,25 @@ test('server diagnostics translate while Russian publication content stays intac
   setLanguage('ru');
   assert.equal((await api('/test')).message, 'AI-задача отменена');
 });
+
+test('channel permission errors show actionable text in the selected language', async () => {
+  const messages = [
+    [
+      'Telegram отклонил проверку прав. Возможные причины: неверный ID или @имя канала, бот не добавлен в канал или не назначен администратором. Проверьте адрес, добавьте бота администратором с правом публикации и повторите проверку. Предыдущие сведения сохранены.',
+      'Telegram rejected the permissions check. Possible causes: an incorrect channel ID or @username, or the bot has not been added to the channel or made an administrator. Check the address, add the bot as an administrator with permission to post, and try again. Previous information has been preserved.',
+    ],
+    [
+      'Не удалось связаться с Telegram. Проверьте подключение к интернету и настройки прокси, затем повторите проверку. Предыдущие сведения сохранены.',
+      'Could not connect to Telegram. Check your internet connection and proxy settings, then try again. Previous information has been preserved.',
+    ],
+  ];
+  for (const [source, translation] of messages) {
+    globalThis.fetch = async () => new Response(JSON.stringify({ error: { code: 'telegram_check_failed', message: source } }), {
+      status: 422, headers: { 'content-type': 'application/json' },
+    });
+    setLanguage('en');
+    await assert.rejects(api('/channels/1/check'), error => error.message === translation);
+    setLanguage('ru');
+    await assert.rejects(api('/channels/1/check'), error => error.message === source);
+  }
+});

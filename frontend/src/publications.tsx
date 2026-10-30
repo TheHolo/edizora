@@ -5,6 +5,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, Check, Clock3, FileImage, 
 import { api, ApiError, safeURL, upload } from './api';
 import { useCommand, useDebounce, useQuery } from './hooks';
 import { Link, setUnsaved, useNavigate } from './navigation';
+import { operationMessage } from './operation-display';
 import { date, Empty, ErrorBlock, Heading, Loading, OperationCard, Panel, PublicationIdentity, SafeRichText, Status, Thumbnail, zonedCandidates } from './ui';
 import type { Asset, Channel, CommandResult, EventRecord, ID, Operation, Page, Preview, Publication } from './types';
 
@@ -32,6 +33,9 @@ export function Publications({ channels, channelID, timezone }: PageProps) {
   if(from) params.set('date_from',from);
   if(until) params.set('date_to',until);
   const query = useQuery<Page<Publication>>('/publications?'+params,10000);
+  const draftParams = new URLSearchParams({limit:'1',status:'waiting_confirmation'});
+  if(channelID) draftParams.set('channel_id',channelID);
+  const drafts = useQuery<Page<Publication>>('/publications?'+draftParams,10000);
   const operations = useQuery<Page<Operation>>('/operations?limit=5&active=true',10000);
   const command = useCommand();
   const [deletionNotice,setDeletionNotice]=useState('');
@@ -49,17 +53,21 @@ export function Publications({ channels, channelID, timezone }: PageProps) {
     setSelected(previous => {const next=new Map(previous); if(next.has(id)) next.delete(id); else next.set(id,version); return next;});
   }
   function changeView(next: string) { setView(next); localStorage.setItem('publisher-view',next); }
+  function showDrafts() {
+    setSearch(''); setStatus('waiting_confirmation'); setKind(''); setFrom(''); setUntil('');
+    setCursor(''); setCursorStack([]); setSelected(new Map()); setBulkReport(null);
+  }
   async function remove(item:Publication){
     if(!confirm(t("Удалить «{0}» навсегда? Запись, история и неиспользуемые медиа будут удалены из приложения. Сообщения в Telegram останутся. Отменить удаление нельзя.",[item.title])))return;
     await command.run(()=>api<{cleanup_pending:boolean}>('/publications/'+item.id,{method:'DELETE',body:{expected_version:item.version}}),result=>{
       setDeletionNotice(result.cleanup_pending?t("Запись удалена. Занятые файлы будут удалены автоматически после освобождения."):t("Запись и неиспользуемые медиа удалены."));
-      setSelected(previous=>{const next=new Map(previous);next.delete(item.id);return next;});query.reload();operations.reload();
+      setSelected(previous=>{const next=new Map(previous);next.delete(item.id);return next;});query.reload();drafts.reload();operations.reload();
     });
   }
   async function bulk(action: string) {
     if(action==='delete'&&!confirm(t("Удалить выбранные публикации ({0}) навсегда? Записи, история и неиспользуемые медиа будут удалены. Сообщения в Telegram останутся. Отменить удаление нельзя.",[selected.size])))return;
     if(action === 'cancel' && !confirm(t("Отменить выбранные публикации (")+selected.size+t(")? Уже отправленные сообщения останутся в канале."))) return;
-    await command.run(() => api<Record<string,unknown>>('/queue/bulk',{method:'POST',body:{action,items:[...selected].map(([id,expected_version]) => ({id,expected_version})),expected_selection_count:selected.size}}), report => {setBulkReport(report);setSelected(new Map());query.reload();});
+    await command.run(() => api<Record<string,unknown>>('/queue/bulk',{method:'POST',body:{action,items:[...selected].map(([id,expected_version]) => ({id,expected_version})),expected_selection_count:selected.size}}), report => {setBulkReport(report);setSelected(new Map());query.reload();drafts.reload();});
   }
   const items = query.data?.items || [];
   const activeOperations = (operations.data?.items||[]).filter(operation=>!['succeeded','cancelled','failed'].includes(operation.status));
@@ -75,7 +83,7 @@ export function Publications({ channels, channelID, timezone }: PageProps) {
         <details className="date-filter"><summary>{t("Период")}</summary><div className="popover"><label>{t("С даты")}<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>{t("По дату")}<input type="date" value={until} onChange={e=>setUntil(e.target.value)}/></label></div></details>
       </div>
       <ErrorBlock error={query.error} retry={query.reload}/><ErrorBlock error={command.error}/>{deletionNotice&&<p className="notice" role="status">{deletionNotice}</p>}
-      {intakeOperations.length>0&&<section className="intake-operations" aria-label={t("Материалы в подготовке")}>{intakeOperations.slice(0,5).map(operation=><div className="intake-row" key={operation.id}><Sparkles size={18}/><div><strong>{operation.kind==='news'?t("Готовится новость"):t("Импорт изображений")}</strong><p className="muted small">{operation.message||t("Сервер принял задачу")}</p></div><Status value={operation.status}/><Link href={'/operations/'+operation.id} className="button secondary">{t("Подробнее")}</Link></div>)}</section>}
+      {intakeOperations.length>0&&<section className="intake-operations" aria-label={t("Материалы в подготовке")}>{intakeOperations.slice(0,5).map(operation=><div className="intake-row" key={operation.id}><Sparkles size={18}/><div><strong>{operation.kind==='news'?t("Готовится новость"):t("Импорт изображений")}</strong><p className="muted small">{operationMessage(operation)||t("Сервер принял задачу")}</p></div><Status value={operation.status}/><Link href={'/operations/'+operation.id} className="button secondary">{t("Подробнее об операции")}</Link></div>)}</section>}
       {selected.size>0 && <div className="selection-toolbar"><strong>{t("Выбрано: ")}{selected.size}</strong><button disabled={command.busy} onClick={()=>void bulk('enqueue')}>{t("В очередь")}</button><button disabled={command.busy} onClick={()=>void bulk('retry')}>{t("Повторить ошибки")}</button><button disabled={command.busy} onClick={()=>void bulk('cancel')}>{t("Отменить")}</button><button className="danger-text" disabled={command.busy} onClick={()=>void bulk('delete')}><Trash2 size={15}/>{t("Удалить навсегда")}</button><button className="icon-button" aria-label={t("Снять выделение")} onClick={()=>setSelected(new Map())}><X size={17}/></button></div>}
       {bulkReport && <details className="notice" open><summary>{t("Результаты массовой команды")}</summary><ul className="bulk-results">{(Array.isArray(bulkReport.items)?bulkReport.items:[]).map((value:unknown,index:number)=>{const item=value as {id?:ID;status?:string;error?:{message?:string}};return <li key={item.id||index}><span>{t("Публикация № ")}{item.id}</span><span>{{success:t("Выполнено"),conflict:t("Изменилась версия или состояние"),blocked:t("Действие заблокировано"),not_found:t("Не найдена")}[item.status||'']||item.status}</span>{item.error?.message&&<p className="small muted">{item.error.message}</p>}</li>;})}</ul></details>}
       {query.loading && !query.data ? <Loading/> : !items.length ? <Panel><Empty title={t("Здесь появятся ваши материалы")} description={search || status || kind ? t("По выбранным фильтрам ничего не найдено. Попробуйте изменить условия.") : t("Добавьте ссылку, новость или текст. Сначала появится черновик — публикация запускается отдельным действием.")} action={<Link className="button secondary" href="/publications/new"><Plus size={17}/>{t("Создать публикацию")}</Link>}/></Panel> :
@@ -92,7 +100,7 @@ export function Publications({ channels, channelID, timezone }: PageProps) {
         <td><Link href={'/publications/'+item.id} className="icon-button" aria-label={t("Открыть ")+item.title}>···</Link>{item.allowed_actions?.includes('delete')&&<button className="icon-button danger-text" disabled={command.busy} onClick={()=>void remove(item)} aria-label={t("Удалить публикацию «{0}»",[item.title])}><Trash2 size={16}/></button>}</td>
       </tr>)}</tbody></table></div>}
       <div className="pagination"><span className="muted small">{query.data ? t("Показано ")+items.length+(query.data.total!==undefined?t(" из ")+query.data.total:'') : ''}</span><div><button disabled={!cursorStack.length} onClick={()=>{const stack=[...cursorStack];setCursor(stack.pop()||'');setCursorStack(stack);}}>{t("Назад")}</button><button disabled={!query.data?.next_cursor} onClick={()=>{setCursorStack(v=>[...v,cursor]);setCursor(query.data?.next_cursor||'');}}>{t("Дальше")}</button></div></div>
-    </div><aside className="activity-rail"><h2>{t("Сейчас в работе")}</h2>{activeOperations.length ? activeOperations.slice(0,3).map(operation=><OperationCard operation={operation} compact key={operation.id}/>) : <Panel><div className="quiet-state"><span className="check-circle"><Check size={20}/></span><strong>{t("Всё спокойно")}</strong><p>{t("Принятые операции появятся здесь. Можно продолжать работу с материалами.")}</p></div></Panel>}<div className="rail-note"><Clock3 size={17}/><p>{t("Точное время и прогноз публикации учитывают часовой пояс ")}<strong>{timezone}</strong>.</p></div></aside></div>
+    </div><aside className="activity-rail"><h2>{t("Сейчас в работе")}</h2><Panel title={t("Черновиков сейчас: {0}",[drafts.loading||drafts.error ? '—' : drafts.data?.total ?? '—'])}>{drafts.error&&<p className="muted small">{t("Не удалось загрузить количество черновиков.")} <button className="text-button" onClick={drafts.reload}>{t("Повторить")}</button></p>}<button className="secondary full" onClick={showDrafts}>{t("Подробнее")}</button></Panel>{activeOperations.length ? activeOperations.slice(0,3).map(operation=><OperationCard operation={{...operation,message:operationMessage(operation)}} compact actionLabel={t("Подробнее об операции")} key={operation.id}/>) : <Panel><div className="quiet-state"><span className="check-circle"><Check size={20}/></span><strong>{t("Всё спокойно")}</strong><p>{t("Принятые операции появятся здесь. Можно продолжать работу с материалами.")}</p></div></Panel>}<div className="rail-note"><Clock3 size={17}/><p>{t("Точное время и прогноз публикации учитывают часовой пояс ")}<strong>{timezone}</strong>.</p></div></aside></div>
   </>;
 }
 

@@ -1,0 +1,77 @@
+name: Windows installer
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and verify Windows x64 installer
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.11.30'
+          python-version: '3.14'
+          enable-cache: true
+
+      - name: Install locked Python dependencies
+        run: uv sync --frozen --extra dev --extra news-worker --extra desktop --extra desktop-build
+
+      - name: Install frontend dependencies
+        run: npm --prefix frontend ci
+
+      - name: Test and build frontend
+        run: |
+          npm --prefix frontend run test:client
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm --prefix frontend run build
+
+      - name: Test desktop and channel behavior
+        run: .\.venv\Scripts\python.exe -m pytest -q tests/test_desktop.py tests/test_web_extras.py tests/test_channel_activation.py
+
+      - name: Build installer
+        run: |
+          $version = .\.venv\Scripts\python.exe -c "from app.branding import APP_VERSION; print(APP_VERSION)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\deploy\build-desktop.ps1 -Version $version
+
+      - name: Test packaged application
+        run: |
+          $env:PUBLISHER_TEST_EXECUTABLE = (Resolve-Path 'output/desktop/bundle/edizora/edizora.exe').Path
+          .\.venv\Scripts\python.exe -m pytest -q tests/test_desktop_bundle.py
+
+      - name: Verify installer checksum
+        run: |
+          $actual = (Get-FileHash 'output/desktop/edizora.exe' -Algorithm SHA256).Hash.ToLowerInvariant()
+          $expected = ((Get-Content 'output/desktop/edizora.exe.sha256' -Raw).Trim() -split '\s+')[0]
+          if ($actual -ne $expected) { throw 'Installer SHA-256 does not match the checksum file.' }
+          "Installer SHA-256: $actual" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: Upload installer and checksum
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: edizora-windows-x64-${{ github.sha }}
+          path: |
+            output/desktop/edizora.exe
+            output/desktop/edizora.exe.sha256
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0

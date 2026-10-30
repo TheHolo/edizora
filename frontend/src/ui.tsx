@@ -81,8 +81,8 @@ export function ProgressBar({ operation }: { operation: Operation }) {
   const percent = Math.max(0, Math.min(100, p.completed / p.total * 100));
   return <div className="measured-progress"><div className="between"><span>{p.unit === 'bytes' ? t("{0} из {1}", [bytes(p.completed), bytes(p.total)]) : t("{0} из {1} {2}", [p.completed, p.total, p.unit === 'files' ? t("файлов") : t("элементов")])}</span><strong>{Math.round(percent)}%</strong></div><progress value={p.completed} max={p.total} aria-label={t("Прогресс текущего этапа")} />{p.estimated_seconds_remaining != null && <span className="muted small">{t("Прогноз: ещё около ")}{Math.ceil(p.estimated_seconds_remaining / 60)} {t(" мин.")}</span>}</div>;
 }
-export function OperationCard({ operation, compact = false }: { operation: Operation; compact?: boolean }) {
-  return <Panel title={operation.message || stageLabels[operation.stage_key] || t("Текущая операция")}><Status value={operation.status} />{!compact && <Stepper operation={operation} />}<ProgressBar operation={operation} /><Link href={`/operations/${operation.id}`} className="button secondary full">{t("Подробнее")}<ChevronRight size={16} /></Link></Panel>;
+export function OperationCard({ operation, compact = false, actionLabel = t("Подробнее") }: { operation: Operation; compact?: boolean; actionLabel?: string }) {
+  return <Panel title={operation.message || stageLabels[operation.stage_key] || t("Текущая операция")}><Status value={operation.status} />{!compact && <Stepper operation={operation} />}{(!compact || operation.progress) && <ProgressBar operation={operation} />}<Link href={`/operations/${operation.id}`} className="button secondary full">{actionLabel}<ChevronRight size={16} /></Link></Panel>;
 }
 export function SafeRichText({ html }: { html: string }) {
   const root = new DOMParser().parseFromString(html, 'text/html').body;

@@ -1,4 +1,5 @@
 .env
+/.publisher-managed.json
 .venv/
 .venv-*/
 __pycache__/
