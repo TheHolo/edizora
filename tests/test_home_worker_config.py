@@ -83,3 +83,23 @@ def test_lmstudio_secret_is_not_allowed_in_toml(tmp_path):
 def test_standalone_worker_rejects_empty_token():
     with pytest.raises(ValidationError, match="must not be empty"):
         HomeWorkerSettings(_config_file="missing.toml", _env_file=None, token="   ")
+
+
+def test_youtube_video_settings_are_loaded_from_toml(tmp_path):
+    config = tmp_path / "worker.toml"
+    config.write_text(
+        '[home_worker]\nyoutube_sample_fps = 5\nyoutube_max_height = 1080\n'
+        'youtube_vision_parallelism = 1\nyoutube_max_source_chunks = 80\n', encoding="utf-8",
+    )
+    settings = HomeWorkerSettings(_config_file=config, _env_file=None, token="test")
+    assert settings.youtube_video_analysis is True
+    assert settings.youtube_sample_fps == 5 and settings.youtube_max_height == 1080
+    assert settings.youtube_vision_parallelism == 1 and settings.youtube_max_source_chunks == 80
+
+
+@pytest.mark.parametrize("settings", [
+    {"youtube_sample_fps": 0}, {"youtube_max_height": 3000}, {"youtube_vision_parallelism": 5},
+])
+def test_youtube_video_settings_reject_invalid_limits(settings):
+    with pytest.raises(ValidationError):
+        HomeWorkerSettings(_config_file="missing.toml", _env_file=None, token="test", **settings)

@@ -34,6 +34,11 @@ WORKER_DEPENDENCIES = {
     "trafilatura": "trafilatura", "extruct": "extruct", "yt_dlp": "yt-dlp",
     "youtube_transcript_api": "youtube-transcript-api",
 }
+VIDEO_DEPENDENCIES = {
+    "rapidocr": "rapidocr", "onnxruntime": "onnxruntime", "cv2": "opencv-python-headless",
+    "imageio_ffmpeg": "imageio-ffmpeg", "faster_whisper": "faster-whisper",
+    "yt_dlp_ejs": "yt-dlp-ejs",
+}
 logger = logging.getLogger(__name__)
 
 
@@ -113,7 +118,10 @@ async def diagnose(settings: Settings, worker: HomeWorkerSettings, *, smoke_test
         checks.append(Check("ERROR", "Все каналы в CHANNELS_JSON отключены."))
     elif settings.channels_json:
         checks.append(Check("OK", f"Каналов в конфигурации: {len(settings.channels_json)}."))
-    missing = [package for module, package in WORKER_DEPENDENCIES.items() if importlib.util.find_spec(module) is None]
+    required = dict(WORKER_DEPENDENCIES)
+    if worker.youtube_video_analysis and "youtube" in worker.source_types:
+        required.update(VIDEO_DEPENDENCIES)
+    missing = [package for module, package in required.items() if importlib.util.find_spec(module) is None]
     if missing:
         checks.append(Check("ERROR", "Не установлены зависимости news-worker: " + ", ".join(missing)
                             + '. Выполните deploy/setup.ps1 или pip install -e ".[news-worker]".'))

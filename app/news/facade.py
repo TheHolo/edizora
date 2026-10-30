@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from pathlib import Path
 from typing import Protocol
 
 import aiohttp
@@ -60,14 +61,32 @@ class NewsSourceFacade:
         *,
         max_source_bytes: int = 4 * 1024 * 1024,
         youtube_languages: tuple[str, ...] = ("ru", "en"),
+        worker_settings: object | None = None,
     ) -> NewsSourceFacade:
         fetcher = SafeHttpFetcher(session, max_bytes=max_source_bytes)
+        from app.news.video import VideoAnalyzer, VideoOptions
+
+        settings = worker_settings
+        analyzer = None
+        if settings is None or getattr(settings, "youtube_video_analysis", True):
+            analyzer = VideoAnalyzer(VideoOptions(
+                sample_fps=getattr(settings, "youtube_sample_fps", 2.0),
+                max_height=getattr(settings, "youtube_max_height", 720),
+                max_seconds=getattr(settings, "youtube_max_seconds", 3600),
+                max_bytes=getattr(settings, "youtube_max_bytes", 512 * 1024 * 1024),
+                ocr_confidence=getattr(settings, "youtube_ocr_confidence", 0.8),
+                vision_interval_seconds=getattr(settings, "youtube_vision_interval_seconds", 30.0),
+                vision_parallelism=getattr(settings, "youtube_vision_parallelism", 2),
+                whisper_model=getattr(settings, "youtube_whisper_model", "small"),
+                cache_dir=Path(getattr(settings, "youtube_cache_dir", ".cache/edizora-video")),
+            ))
         return cls(
             website=WebsiteExtractor(fetcher),
             youtube=YouTubeExtractor(
                 YtDlpMetadataAdapter(),
                 YoutubeTranscriptApiAdapter(),
                 languages=youtube_languages,
+                video_analyzer=analyzer,
             ),
             telegram=TelegramPostExtractor(fetcher),
         )
@@ -87,6 +106,19 @@ class NewsSourceFacade:
                 f"Обработчик источника {resolved.kind.value} не настроен"
             )
         return await extractor.extract(resolved.value, progress=progress)
+
+    async def extract_youtube(
+        self, request: NewsSourceRequest, *, vision_client: object,
+        progress: ProgressCallback | None = None,
+    ) -> ExtractedNewsSource:
+        extractor = self._extractors.get(NewsSourceKind.YOUTUBE)
+        if not isinstance(extractor, YouTubeExtractor):
+            raise UnsupportedNewsSourceError("Обработчик YouTube не настроен")
+        if extractor._video_analyzer is not None:
+            from app.news.video import _loopback
+            if not _loopback(getattr(vision_client, "base_url", "")):
+                raise UnsupportedNewsSourceError("Для анализа видео выберите локальную модель LM Studio или Ollama")
+        return await extractor.extract(request.value, progress=progress, vision_client=vision_client)
 
     async def extract_forwarded(
         self,

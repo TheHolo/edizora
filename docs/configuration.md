@@ -194,6 +194,17 @@ HOME_WORKER_LMSTUDIO_API_KEY=
 | `temperature` | `0.1` | от 0 до 0.5 |
 | `max_source_chars_per_chunk` | `24000` | первичный размер части источника |
 | `max_source_chunks` | `16` | максимум частей, 1–64 |
+| `youtube_video_analysis` | `true` | локальный анализ видеокадров; `false` оставляет прежний путь по субтитрам |
+| `youtube_sample_fps` | `2` | частота OCR-кадров, 0.2–10 кадров/с |
+| `youtube_max_height` | `720` | предпочитаемое максимальное разрешение видеодорожки по высоте, 240–2160 |
+| `youtube_max_seconds` | `3600` | максимальная длительность, 30–21600 секунд |
+| `youtube_max_bytes` | `536870912` | максимальный размер каждой скачанной дорожки |
+| `youtube_ocr_confidence` | `0.8` | порог уверенности OCR для дополнительного анализа кадра |
+| `youtube_vision_interval_seconds` | `30` | интервал дополнительных контрольных кадров, 5–300 секунд |
+| `youtube_vision_parallelism` | `2` | число одновременных запросов к локальной vision-модели, 1–4 |
+| `youtube_max_source_chunks` | `64` | максимум текстовых частей для материала видео, 1–256 |
+| `youtube_whisper_model` | `small` | локальный Whisper при отсутствии субтитров |
+| `youtube_cache_dir` | `.cache/edizora-video` | локальный кэш моделей и временные файлы |
 | `source_types` | все четыре типа | `website`, `youtube`, `telegram`, `manual` |
 | `log_level` | `INFO` | уровень логов worker |
 

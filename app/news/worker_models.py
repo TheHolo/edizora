@@ -180,3 +180,38 @@ class FactBundle(BaseModel):
         if any(not item or len(item) > 500 for item in result):
             raise ValueError("fact bundle items must contain 1-500 characters")
         return result
+
+
+def _split_long_list_items(value: Any) -> Any:
+    if not isinstance(value, list):
+        return value
+    result = []
+    for item in value:
+        if not isinstance(item, str):
+            result.append(item)
+            continue
+        remaining = item.strip()
+        while len(remaining) > 500:
+            boundary = max(remaining.rfind("\n", 0, 501), remaining.rfind(" ", 0, 501))
+            if boundary < 250:
+                boundary = 500
+            result.append(remaining[:boundary].strip())
+            remaining = remaining[boundary:].strip()
+        result.append(remaining)
+    return result
+
+
+class VideoFactBundle(FactBundle):
+    """Preserve verbose model output while respecting the existing list-item limits."""
+
+    @field_validator("facts", "names", "dates", "numbers", "warnings", mode="before")
+    @classmethod
+    def split_long_items(cls, value: Any) -> Any:
+        return _split_long_list_items(value)
+
+
+class VideoNewsDraft(NewsDraft):
+    @field_validator("facts_used", "warnings", mode="before")
+    @classmethod
+    def split_long_items(cls, value: Any) -> Any:
+        return _split_long_list_items(value)

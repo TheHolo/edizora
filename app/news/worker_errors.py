@@ -30,6 +30,10 @@ class LlmOutputError(TransientLlmError):
     pass
 
 
+class LlmOutputTruncatedError(LlmOutputError):
+    """A complete response did not fit the model's output limit."""
+
+
 class OllamaError(LlmError):
     pass
 

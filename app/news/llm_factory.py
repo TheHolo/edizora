@@ -24,7 +24,7 @@ def create_news_client(session: aiohttp.ClientSession, settings: HomeWorkerSetti
                 "Заполните HOME_WORKER_LMSTUDIO_MODEL точным ID модели. "
                 "Посмотреть ID: python -m app.local --models"
             )
-        return LMStudioNewsClient(
+        client = LMStudioNewsClient(
             session, **common,
             base_url=settings.openai_base_url if generic else settings.lmstudio_base_url,
             api_key=(settings.openai_api_key.get_secret_value() if settings.openai_api_key else None) if generic else (settings.lmstudio_api_key.get_secret_value() if settings.lmstudio_api_key else None),
@@ -33,7 +33,9 @@ def create_news_client(session: aiohttp.ClientSession, settings: HomeWorkerSetti
             context_length=settings.lmstudio_context_length,
             max_predict_tokens=settings.lmstudio_max_predict_tokens,
         )
-    return OllamaNewsClient(
+        client.youtube_max_source_chunks = settings.youtube_max_source_chunks
+        return client
+    client = OllamaNewsClient(
         session, **common,
         base_url=settings.ollama_base_url,
         timeout_seconds=settings.ollama_timeout_seconds,
@@ -42,6 +44,8 @@ def create_news_client(session: aiohttp.ClientSession, settings: HomeWorkerSetti
         context_length=settings.ollama_context_length,
         max_predict_tokens=settings.ollama_max_predict_tokens,
     )
+    client.youtube_max_source_chunks = settings.youtube_max_source_chunks
+    return client
 
 
 async def list_model_ids(session: aiohttp.ClientSession, settings: HomeWorkerSettings) -> list[str]:

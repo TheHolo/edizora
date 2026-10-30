@@ -127,7 +127,7 @@ async def run_connections(runtime, control):
         async with aiohttp.ClientSession(trust_env=False) as session, aiohttp.ClientSession(
             trust_env=False, connector=aiohttp.TCPConnector(resolver=PublicOnlyResolver())) as sources:
             worker = ConfiguredWorker(api=DirectApi(runtime, profile["credential"]), settings=settings,
-                session=session, extractor=NewsSourceFacade.from_session(sources))
+                session=session, extractor=NewsSourceFacade.from_session(sources, worker_settings=settings))
             while True:
                 try:
                     worked = await worker.run_once()

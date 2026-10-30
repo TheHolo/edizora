@@ -37,6 +37,17 @@ HOME_WORKER_TOML_FIELDS = {
     "temperature",
     "max_source_chars_per_chunk",
     "max_source_chunks",
+    "youtube_video_analysis",
+    "youtube_sample_fps",
+    "youtube_max_height",
+    "youtube_max_seconds",
+    "youtube_max_bytes",
+    "youtube_ocr_confidence",
+    "youtube_vision_interval_seconds",
+    "youtube_whisper_model",
+    "youtube_cache_dir",
+    "youtube_max_source_chunks",
+    "youtube_vision_parallelism",
     "source_types",
     "log_level",
 }
@@ -90,6 +101,18 @@ class HomeWorkerSettings(BaseSettings):
     temperature: float = Field(0.1, ge=0, le=0.5)
     max_source_chars_per_chunk: int = Field(24000, ge=4000, le=200000)
     max_source_chunks: int = Field(16, ge=1, le=64)
+
+    youtube_video_analysis: bool = True
+    youtube_sample_fps: float = Field(2.0, ge=0.2, le=10.0)
+    youtube_max_height: int = Field(720, ge=240, le=2160)
+    youtube_max_seconds: int = Field(3600, ge=30, le=21600)
+    youtube_max_bytes: int = Field(512 * 1024 * 1024, ge=1024 * 1024, le=5 * 1024 * 1024 * 1024)
+    youtube_ocr_confidence: float = Field(0.8, ge=0.35, le=1.0)
+    youtube_vision_interval_seconds: float = Field(30.0, ge=5.0, le=300.0)
+    youtube_whisper_model: Literal["tiny", "base", "small", "medium", "large-v3", "large-v3-turbo"] = "small"
+    youtube_cache_dir: str = Field(".cache/edizora-video", min_length=1, max_length=1024)
+    youtube_max_source_chunks: int = Field(64, ge=1, le=256)
+    youtube_vision_parallelism: int = Field(2, ge=1, le=4)
 
     source_types: tuple[str, ...] = ("website", "youtube", "telegram", "manual")
     log_level: str = "INFO"

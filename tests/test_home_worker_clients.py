@@ -10,7 +10,7 @@ import pytest
 from app.news.models import ExtractedNewsSource, NewsSourceKind
 from app.news.ollama_client import OllamaNewsClient
 from app.news.vps_client import VpsNewsApiClient
-from app.news.worker_errors import LeaseLostError
+from app.news.worker_errors import LeaseLostError, LlmOutputTruncatedError
 from app.news.worker_models import NewsDraft, NewsTask, WorkerResult
 
 
@@ -167,6 +167,16 @@ async def test_ollama_uses_gemma_structured_schema_and_disables_thinking():
     assert request["json"]["think"] is False
     assert request["json"]["options"]["temperature"] == 0.1
     assert request["json"]["format"]["additionalProperties"] is False
+
+
+async def test_ollama_rejects_truncated_output_even_if_it_is_valid_json():
+    response = FakeResponse(200, {"done_reason": "length", "message": {
+        "content": '{"headline":"Заголовок","body":"Текст"}'}})
+    session = FakeSession(response)
+    client = OllamaNewsClient(session, base_url="http://127.0.0.1:11434", max_retries=2)
+    with pytest.raises(LlmOutputTruncatedError):
+        await client.rewrite(make_result().source)
+    assert len(session.requests) == 1 and response.released
 
 
 async def test_ollama_retries_without_think_when_runtime_does_not_support_it():

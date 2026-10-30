@@ -8,7 +8,7 @@ from app.news.llm_factory import create_news_client, list_model_ids
 from app.news.lmstudio_client import LMStudioNewsClient
 from app.news.ollama_client import OllamaNewsClient
 from app.news.worker_config import HomeWorkerSettings
-from app.news.worker_errors import LlmError, LlmOutputError, TransientLlmError
+from app.news.worker_errors import LlmError, LlmOutputError, LlmOutputTruncatedError, TransientLlmError
 from app.news.worker_models import NewsDraft
 from test_home_worker_clients import FakeResponse, FakeSession, make_result
 
@@ -43,6 +43,12 @@ async def test_lmstudio_rewrites_using_schema_and_optional_authorization():
     assert response.released
 
 
+async def test_local_lmstudio_can_disable_reasoning_per_request():
+    session = FakeSession(valid_response())
+    await client(session, disable_reasoning=True, max_retries=0).rewrite(make_result().source)
+    assert session.requests[0]["json"]["reasoning_effort"] == "none"
+
+
 @pytest.mark.parametrize("payload", [None, [], {}, {"choices": []},
     {"choices": [{"message": {"content": "{}"}}]},
     {"choices": [{"message": {"content": "invalid json"}}]},
@@ -75,6 +81,15 @@ async def test_truncated_output_is_not_accepted_even_when_json_is_valid():
     response.payload["choices"][0]["finish_reason"] = "length"
     with pytest.raises(LlmOutputError, match="обрезан"):
         await client(FakeSession(response), max_retries=0).rewrite(make_result().source)
+
+
+async def test_truncated_output_is_not_retried_unchanged():
+    response = valid_response()
+    response.payload["choices"][0]["finish_reason"] = "length"
+    session = FakeSession(response, valid_response())
+    with pytest.raises(LlmOutputTruncatedError):
+        await client(session, max_retries=2).rewrite(make_result().source)
+    assert len(session.requests) == 1 and response.released
 
 
 async def test_cancellation_is_not_retried():

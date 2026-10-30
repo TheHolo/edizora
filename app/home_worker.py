@@ -55,7 +55,7 @@ async def run_worker(
             trust_env=False, connector=extractor_connector,
         ) as extractor_session,
     ):
-        extractor = NewsSourceFacade.from_session(extractor_session)
+        extractor = NewsSourceFacade.from_session(extractor_session, worker_settings=settings)
         api = VpsNewsApiClient(
             session,
             base_url=settings.vps_api_url,

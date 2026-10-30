@@ -36,8 +36,13 @@ proxy = ["aiohttp-socks>=0.9,<1"]
 news-worker = [
   "trafilatura>=2.0,<3",
   "extruct>=0.18,<1",
-  "yt-dlp>=2025.6",
+  "yt-dlp[default]>=2025.11.12",
   "youtube-transcript-api>=1.2,<2",
+  "rapidocr>=3.10,<4",
+  "onnxruntime>=1.23,<2",
+  "imageio-ffmpeg>=0.6,<1",
+  "faster-whisper>=1.2,<2",
+  "av>=14,<19",
 ]
 dev = [
   "pytest>=9.1,<10",

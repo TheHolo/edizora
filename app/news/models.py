@@ -25,6 +25,7 @@ class ExtractionStage(StrEnum):
     EXTRACTING_CONTENT = "extracting_content"
     EXTRACTING_METADATA = "extracting_metadata"
     EXTRACTING_SUBTITLES = "extracting_subtitles"
+    TRANSCRIBING = "transcribing"
 
 
 @dataclass(slots=True, frozen=True)

@@ -76,7 +76,13 @@ class NewsAdapter:
     async def complete(self,task,result):
         return await self.api.call("complete",{**self.api.task_payload(self.envelope),"result":result.model_dump(mode="json")})
     async def fail(self,task,error,*,retryable=False):
-        return await self.api.call("fail",{**self.api.task_payload(self.envelope),"retryable":retryable})
+        from app.news.worker_errors import SourceTooLargeError
+        allowed={"missing_news_dependency","news_content_too_large","news_source_unavailable",
+                 "news_transcript_unavailable","unsupported_news_source"}
+        code="source_text_too_large" if isinstance(error,SourceTooLargeError) else getattr(error,"code","")
+        payload={**self.api.task_payload(self.envelope),"retryable":retryable}
+        if isinstance(code,str) and (code in allowed or code=="source_text_too_large"):payload["error_code"]=code
+        return await self.api.call("fail",payload)
 
 
 class RegisteredWorker:
@@ -153,7 +159,7 @@ async def main(args):
     settings=HomeWorkerSettings(_config_file=args.config,_env_file=None,token="managed-worker-local-only",llm_provider=metadata["provider"])
     async with aiohttp.ClientSession(trust_env=False) as local_session,aiohttp.ClientSession(trust_env=False,connector=aiohttp.TCPConnector(resolver=PublicOnlyResolver())) as source_session:
         api=WorkerApi(local_session,metadata["origin"],credential,metadata["system_id"])
-        worker=RegisteredWorker(api=api,settings=settings,session=local_session,extractor=NewsSourceFacade.from_session(source_session))
+        worker=RegisteredWorker(api=api,settings=settings,session=local_session,extractor=NewsSourceFacade.from_session(source_session,worker_settings=settings))
         while True:
             try:worked=await worker.run_once()
             except VpsAuthenticationError:raise

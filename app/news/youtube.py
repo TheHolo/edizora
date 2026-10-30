@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import html
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -35,6 +36,14 @@ class Transcript:
     text: str
     language: str | None = None
     is_generated: bool | None = None
+    segments: tuple[TranscriptSegment, ...] = ()
+
+
+@dataclass(slots=True, frozen=True)
+class TranscriptSegment:
+    start: float
+    duration: float
+    text: str
 
 
 class YouTubeMetadataAdapter(Protocol):
@@ -167,7 +176,10 @@ class YoutubeTranscriptApiAdapter:
         text = _clean_transcript(values)
         if not text:
             raise NewsTranscriptUnavailableError("YouTube вернул пустые субтитры")
-        return Transcript(text=text, language=language, is_generated=generated)
+        return Transcript(
+            text=text, language=language, is_generated=generated,
+            segments=_transcript_segments(fetched),
+        )
 
 
 def _fetch_preferred_transcript(
@@ -245,6 +257,23 @@ def _transcript_values(fetched: Any) -> list[str]:
     ]
 
 
+def _transcript_segments(fetched: Any) -> tuple[TranscriptSegment, ...]:
+    result: list[TranscriptSegment] = []
+    for item in getattr(fetched, "snippets", fetched):
+        def field(name: str, default: Any = None) -> Any:
+            return item.get(name, default) if isinstance(item, dict) else getattr(item, name, default)
+
+        try:
+            start = float(field("start"))
+            duration = float(field("duration", 0))
+        except (TypeError, ValueError):
+            continue
+        text = _clean_inline(field("text"))
+        if text and math.isfinite(start) and math.isfinite(duration) and start >= 0 and duration >= 0:
+            result.append(TranscriptSegment(start=start, duration=duration, text=text))
+    return tuple(result)
+
+
 class YouTubeExtractor:
     def __init__(
         self,
@@ -252,16 +281,19 @@ class YouTubeExtractor:
         transcript_adapter: YouTubeTranscriptAdapter,
         *,
         languages: Sequence[str] = ("ru", "en"),
+        video_analyzer: Any | None = None,
     ) -> None:
         self._metadata_adapter = metadata_adapter
         self._transcript_adapter = transcript_adapter
         self._languages = tuple(languages)
+        self._video_analyzer = video_analyzer
 
     async def extract(
         self,
         url: str,
         *,
         progress: ProgressCallback | None = None,
+        vision_client: Any | None = None,
     ) -> ExtractedNewsSource:
         normalized_url = normalize_youtube_url(url)
         source_id = youtube_video_id(normalized_url)
@@ -276,17 +308,44 @@ class YouTubeExtractor:
             ExtractionStage.EXTRACTING_SUBTITLES,
             "Извлекаем субтитры YouTube",
         )
-        transcript = await self._transcript_adapter.fetch_transcript(
-            source_id,
-            self._languages,
-        )
+        transcript: Transcript | None
+        try:
+            transcript = await self._transcript_adapter.fetch_transcript(source_id, self._languages)
+        except (NewsTranscriptUnavailableError, NewsSourceRateLimitedError):
+            if self._video_analyzer is None:
+                raise
+            transcript = None
+
+        video_result = None
+        if self._video_analyzer is not None:
+            video_result = await self._video_analyzer.analyze(
+                normalized_url, metadata=metadata, need_audio=transcript is None,
+                vision_client=vision_client, progress=progress,
+            )
+            if transcript is None:
+                transcript = video_result.transcript
 
         title = _clean_inline(metadata.get("title")) or "Видео YouTube"
         description = _clean_block(metadata.get("description"))
         raw_parts = [f"Название: {title}"]
         if description:
             raw_parts.append(f"Описание:\n{description}")
-        raw_parts.append(f"Субтитры:\n{transcript.text}")
+        timed: list[tuple[float, str]] = []
+        if transcript is not None:
+            if transcript.segments:
+                label = "Речь (Whisper)" if video_result and video_result.transcript else "Субтитры"
+                timed.extend((segment.start, f"{label}: {segment.text}") for segment in transcript.segments)
+            else:
+                raw_parts.append(f"Субтитры:\n{transcript.text}")
+        if video_result is not None:
+            timed.extend((item.start, f"{item.kind}: {item.text}") for item in video_result.timeline)
+            if video_result.warnings:
+                raw_parts.append("Ограничения анализа:\n" + "\n".join(video_result.warnings))
+        if timed:
+            timed.sort(key=lambda item: item[0])
+            raw_parts.append("Сведения из видео с исходными таймкодами:\n" + "\n".join(
+                f"[{_timestamp(at)}] {text}" for at, text in timed
+            ))
         raw_text = "\n\n".join(raw_parts)
         if not raw_text.strip():
             raise EmptyNewsContentError("YouTube не вернул текст для обработки")
@@ -319,8 +378,9 @@ class YouTubeExtractor:
                 "duration": _positive_int(metadata.get("duration")),
                 "view_count": _positive_int(metadata.get("view_count")),
                 "channel_id": _clean_inline(metadata.get("channel_id")) or None,
-                "transcript_language": transcript.language,
-                "transcript_generated": transcript.is_generated,
+                "transcript_language": transcript.language if transcript else None,
+                "transcript_generated": transcript.is_generated if transcript else None,
+                **({"video_analysis": video_result.metadata, "analysis_warnings": video_result.warnings} if video_result else {}),
             },
         )
 
@@ -332,6 +392,14 @@ async def _emit(
 ) -> None:
     if progress is not None:
         await progress(ExtractionProgress(stage=stage, message=message))
+
+
+def _timestamp(seconds: float) -> str:
+    total_ms = round(max(0.0, seconds) * 1000)
+    hours, remainder = divmod(total_ms, 3_600_000)
+    minutes, remainder = divmod(remainder, 60_000)
+    secs, millis = divmod(remainder, 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d}.{millis:03d}"
 
 
 def _clean_transcript(values: Sequence[str]) -> str:

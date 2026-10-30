@@ -14,7 +14,7 @@ from app.news.structured_client import (
     StructuredModel,
     StructuredNewsClient,
 )
-from app.news.worker_errors import OllamaError, OllamaOutputError, TransientOllamaError
+from app.news.worker_errors import LlmOutputTruncatedError, OllamaError, OllamaOutputError, TransientOllamaError
 
 
 class OllamaNewsClient(StructuredNewsClient):
@@ -73,6 +73,8 @@ class OllamaNewsClient(StructuredNewsClient):
                 if response.status != 200:
                     raise OllamaError(f"Ollama rejected the request (HTTP {response.status})")
 
+                if isinstance(payload, dict) and payload.get("done_reason") == "length":
+                    raise LlmOutputTruncatedError("Ollama: ответ обрезан по лимиту длины")
                 try:
                     content = payload["message"]["content"]
                     if isinstance(content, str):

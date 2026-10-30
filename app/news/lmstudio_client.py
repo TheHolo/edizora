@@ -7,14 +7,16 @@ import aiohttp
 from pydantic import ValidationError
 
 from app.news.structured_client import StructuredModel, StructuredNewsClient
-from app.news.worker_errors import LlmError, LlmOutputError, TransientLlmError
+from app.news.worker_errors import LlmError, LlmOutputError, LlmOutputTruncatedError, TransientLlmError
 
 
 class LMStudioNewsClient(StructuredNewsClient):
     """Local OpenAI-compatible transport; extraction and context budgeting are shared."""
 
-    def __init__(self, session: aiohttp.ClientSession, *, api_key: str | None = None, **kwargs: Any) -> None:
+    def __init__(self, session: aiohttp.ClientSession, *, api_key: str | None = None,
+                 disable_reasoning: bool = False, **kwargs: Any) -> None:
         super().__init__(session, **kwargs)
+        self._disable_reasoning = disable_reasoning
         self._headers = {"Accept": "application/json", "Content-Type": "application/json"}
         if api_key:
             self._headers["Authorization"] = f"Bearer {api_key}"
@@ -43,6 +45,8 @@ class LMStudioNewsClient(StructuredNewsClient):
                 },
             },
         }
+        if self._disable_reasoning:
+            body["reasoning_effort"] = "none"
         for attempt in range(self.max_retries + 1):
             response = None
             try:
@@ -56,7 +60,7 @@ class LMStudioNewsClient(StructuredNewsClient):
                     payload = await response.json(content_type=None)
                     choice = payload["choices"][0]
                     if choice.get("finish_reason") == "length":
-                        raise LlmOutputError(
+                        raise LlmOutputTruncatedError(
                             "LM Studio: ответ обрезан. Увеличьте HOME_WORKER_LMSTUDIO_MAX_PREDICT_TOKENS "
                             "и контекст модели или отключите reasoning в LM Studio."
                         )
@@ -69,6 +73,10 @@ class LMStudioNewsClient(StructuredNewsClient):
                         f"LM Studio: ответ не соответствует схеме {response_model.__name__}"
                     ) from error
             except LlmError as error:
+                if isinstance(error, LlmOutputTruncatedError):
+                    # Retrying an identical prompt is unlikely to reduce its output;
+                    # the video pipeline can instead split the material and retry.
+                    raise
                 if not error.retryable:
                     raise
                 last_error: LlmError = error

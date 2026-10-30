@@ -140,7 +140,28 @@ class HomeNewsWorker:
             ProgressStage.LLM_PROCESSING,
             f"Локальная модель {llm.model} создаёт черновик",
         )
-        draft = await llm.rewrite(source)
+        original_chunks = getattr(llm, "max_source_chunks", None)
+        original_reasoning = getattr(llm, "_disable_reasoning", None)
+        video_analyzed = source.kind is NewsSourceKind.YOUTUBE and "video_analysis" in source.metadata
+        if video_analyzed and original_chunks is not None:
+            from app.news.worker_errors import SourceTooLargeError
+            if len(source.raw_text) > 2_000_000:
+                raise SourceTooLargeError("Результат анализа видео превышает лимит текста")
+            llm.max_source_chunks = getattr(llm, "youtube_max_source_chunks", original_chunks)
+        if video_analyzed and original_reasoning is not None:
+            llm._disable_reasoning = True
+        try:
+            draft = await llm.rewrite(source)
+        finally:
+            if original_chunks is not None:
+                llm.max_source_chunks = original_chunks
+            if original_reasoning is not None:
+                llm._disable_reasoning = original_reasoning
+        source_warnings = source.metadata.get("analysis_warnings") or []
+        if source_warnings:
+            draft = draft.model_copy(update={"warnings": list(dict.fromkeys(
+                [*source_warnings, *draft.warnings]
+            ))[:20]})
 
         await progress.report(
             ProgressStage.VALIDATING,
@@ -173,6 +194,12 @@ class HomeNewsWorker:
             )
             return _forwarded_telegram_source(task)
         request = NewsSourceRequest(kind=payload.kind, value=payload.extraction_value())
+        if payload.kind is NewsSourceKind.YOUTUBE:
+            from app.news.facade import NewsSourceFacade
+            if isinstance(self.extractor, NewsSourceFacade):
+                return await self.extractor.extract_youtube(
+                    request, vision_client=self.ollama, progress=progress.from_extractor,
+                )
         return await self.extractor.extract(request, progress=progress.from_extractor)
 
 

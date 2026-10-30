@@ -14,6 +14,16 @@ from app.services.title_client import TitleTranslation
 from app.runtime import InstanceLock
 
 
+_WORKER_FAILURE_MESSAGES = {
+    "missing_news_dependency": "Не установлены зависимости для обработки видео на домашнем worker",
+    "news_content_too_large": "Источник превышает настроенный лимит длительности или размера",
+    "news_source_unavailable": "Не удалось получить или обработать источник; проверьте локальную модель и доступ к видео",
+    "news_transcript_unavailable": "У видео нет доступных субтитров",
+    "unsupported_news_source": "Источник не поддерживается; для видео нужна локальная vision-модель",
+    "source_text_too_large": "Материал не поместился в лимит частей; проверьте настройки источника и контекста",
+}
+
+
 def _model_ids(models):
     result=[]
     for model in models:
@@ -148,7 +158,9 @@ async def worker_command(service,operation,payload,credential=""):
             await _event(session,task,"running",task.stage_message)
         elif operation in {"fail","release"}:
             retry=operation=="release" or bool(payload.get("retryable")) and task.attempts<task.max_attempts
-            task.status="queued" if retry else "failed";task.stage="queued" if retry else "failed";task.stage_message="Ждём домашний компьютер" if retry else "Ошибка домашнего исполнителя"
+            code=payload.get("error_code")
+            failure=_WORKER_FAILURE_MESSAGES.get(code,"Ошибка домашнего исполнителя") if isinstance(code,str) else "Ошибка домашнего исполнителя"
+            task.status="queued" if retry else "failed";task.stage="queued" if retry else "failed";task.stage_message="Ждём домашний компьютер" if retry else failure
             task.lease_owner=None;task.lease_token=None;task.lease_expires_at=None;task.lease_generation+=1
             await _event(session,task,"waiting_worker" if retry else "failed",task.stage_message)
         else:raise PlatformError(422,"invalid_worker_command","Неизвестная команда исполнителя")
