@@ -10,7 +10,7 @@ import httpx
 from fastapi import Depends, Request
 from pydantic import BaseModel, Field
 
-from app.application.platform import PlatformError
+from app.application.errors import PlatformError
 from app.desktop.ai import Connection, add_connection, probe, profiles, public_profile
 from app.host.secrets import SecretStore
 from app.branding import APP_NAME, APP_VERSION
@@ -126,6 +126,8 @@ def install_routes(app, principal, auth, runtime, gate):
 
 
 def autostart_enabled():
+    if os.environ.get('PUBLISHER_TAURI_PROTOTYPE') == '1':
+        return False
     if os.name != 'nt':
         return False
     import winreg
@@ -136,11 +138,30 @@ def autostart_enabled():
         return False
 
 
+def _autostart_target(backend: Path, declared_shell: str | None) -> Path:
+    """A Tauri host may start only its sibling installed shell, never an arbitrary path."""
+    if not declared_shell:
+        return backend
+    try:
+        backend = backend.resolve(strict=True)
+        candidate = Path(declared_shell).resolve(strict=True)
+        expected = (backend.parent.parent / 'edizora.exe').resolve(strict=True)
+    except (OSError, RuntimeError):
+        raise PlatformError(422, 'desktop_shell_unavailable', 'Не удалось найти установленное приложение Edizora') from None
+    if (backend.name.casefold() != 'edizora-backend.exe' or backend.parent.name.casefold() != 'backend'
+            or candidate != expected or not candidate.is_file()):
+        raise PlatformError(422, 'desktop_shell_unavailable', 'Не удалось проверить установленное приложение Edizora')
+    return candidate
+
+
 def set_autostart(enabled):
+    if os.environ.get('PUBLISHER_TAURI_PROTOTYPE') == '1':
+        raise PlatformError(422, 'prototype_autostart_unavailable', 'Автозапуск недоступен в изолированной тестовой сборке')
     if os.name != 'nt' or not getattr(sys, 'frozen', False):
         raise PlatformError(422, 'installed_app_required', 'Автозапуск доступен в установленном приложении Windows')
     import subprocess
     import winreg
+    target = _autostart_target(Path(sys.executable), os.environ.get('PUBLISHER_TAURI_SHELL')) if enabled else None
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Run') as key:
         # Retire the legacy entry so upgrades never launch both executables.
         try:
@@ -148,7 +169,7 @@ def set_autostart(enabled):
         except FileNotFoundError:
             pass
         if enabled:
-            winreg.SetValueEx(key, 'Edizora', 0, winreg.REG_SZ, subprocess.list2cmdline([sys.executable, '--background']))
+            winreg.SetValueEx(key, 'Edizora', 0, winreg.REG_SZ, subprocess.list2cmdline([str(target), '--background']))
         else:
             try:
                 winreg.DeleteValue(key, 'Edizora')

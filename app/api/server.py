@@ -1,4 +1,5 @@
 import inspect
+import hmac
 import ipaddress
 import json
 import secrets
@@ -13,7 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from starlette.exceptions import HTTPException
 
 from app.api.auth import AuthError, AuthStore, Principal
-from app.application.platform import PlatformError
+from app.application.errors import PlatformError
 from app.host.control import GateClosed
 from app.branding import APP_NAME, APP_VERSION
 from app.deployment.snapshot import VerificationError
@@ -30,6 +31,9 @@ class WebConfig:
     admin_ids: set[int] = field(default_factory=set)
     frontend: Path = Path("frontend/dist")
     desktop: bool = False
+    # Present only for the bundled desktop bridge. This authenticates the
+    # local transport; user authentication and CSRF checks still apply.
+    desktop_bridge_token: str | None = None
     upload_limit: int = 47 * 1024 * 1024
 
 
@@ -60,6 +64,9 @@ def create_app(service, auth: AuthStore, *, config: WebConfig | None = None,
         host = request.url.hostname
         if host not in config.allowed_hosts:
             return error_response(400, "invalid_host", "Адрес панели не разрешён", request)
+        if (config.desktop_bridge_token is not None and request.url.path.startswith('/api/v1/')
+                and not hmac.compare_digest(request.headers.get('x-edizora-bridge', ''), config.desktop_bridge_token)):
+            return error_response(403, 'invalid_desktop_transport', 'Локальное соединение не подтверждено', request)
         if request.headers.get("content-length", "0").isdigit() and int(request.headers.get("content-length", 0)) > config.upload_limit + 65536:
             return error_response(413, "payload_too_large", "Превышен допустимый размер запроса", request)
         if request.method not in {"GET", "HEAD", "OPTIONS"}:
@@ -482,6 +489,11 @@ def create_app(service, auth: AuthStore, *, config: WebConfig | None = None,
 
     @app.post("/api/v1/assets/uploads", status_code=201)
     async def upload(file: UploadFile, actor: Actor):
+        if config.desktop_bridge_token is not None:
+            # This route remains authenticated and CSRF-protected. The private
+            # runtime transfer is binary rather than a base64 RPC argument.
+            return await invoke(service, 'upload_asset_stream', actor.user_id, file,
+                                max_bytes=config.upload_limit)
         data = await file.read(config.upload_limit + 1)
         if len(data) > config.upload_limit:
             raise AuthError("upload_too_large", "Файл превышает допустимый размер", 413)

@@ -1,6 +1,7 @@
 import asyncio
 import hmac
 import os
+import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -93,6 +94,45 @@ def runtime_app():
 
     app = FastAPI(lifespan=lifespan, docs_url=None, openapi_url=None)
 
+    @app.post('/rpc/upload')
+    async def upload_stream(request: Request):
+        if (not request.client or request.client.host not in {'127.0.0.1', '::1'}
+                or not hmac.compare_digest(request.headers.get('authorization', ''), 'Bearer ' + token)):
+            return JSONResponse({'error': {'code': 'unauthorized', 'message': 'Invalid host credential'}}, status_code=401)
+        try:
+            actor_id = int(request.query_params['actor_id'])
+            filename = request.query_params.get('filename', 'upload')
+            if actor_id <= 0 or len(filename) > 255 or any(ord(c) < 32 for c in filename):
+                raise ValueError('Invalid upload metadata')
+        except (KeyError, ValueError):
+            return JSONResponse({'error': {'code': 'invalid_upload', 'message': 'Invalid upload metadata'}}, status_code=422)
+        if state['closing']:
+            return JSONResponse({'error': {'code': 'maintenance', 'message': 'Приложение остановлено для переноса'}}, status_code=503)
+        state['active'] += 1
+        try:
+            directory = control / 'private' / 'uploads'
+            directory.mkdir(parents=True, exist_ok=True)
+            if directory.is_symlink():
+                raise ValueError('Invalid upload staging directory')
+            if os.name != 'nt':
+                directory.chmod(0o700)
+            with tempfile.SpooledTemporaryFile(max_size=1024 * 1024, mode='w+b', dir=directory) as stream:
+                size = 0
+                async for chunk in request.stream():
+                    size += len(chunk)
+                    if size > 47 * 1024 * 1024:
+                        return JSONResponse({'error': {'code': 'upload_too_large', 'message': 'Файл превышает допустимый размер'}}, status_code=413)
+                    await asyncio.to_thread(stream.write, chunk)
+                stream.seek(0)
+                result = await service.upload_asset_stream(actor_id, stream, filename=filename)
+                return JSONResponse(result)
+        except PlatformError as error:
+            return JSONResponse({'error': {'code': error.code, 'message': error.message}}, status_code=error.status)
+        except Exception:
+            return JSONResponse({'error': {'code': 'runtime_error', 'message': 'Операция не завершена. Проверьте состояние приложения.'}}, status_code=500)
+        finally:
+            state['active'] -= 1
+
     @app.post('/rpc')
     async def rpc(request: Request):
         if request.client and request.client.host not in {'127.0.0.1', '::1'}:
@@ -137,7 +177,45 @@ def runtime_app():
 
 def run():
     import uvicorn
-    uvicorn.run(runtime_app(), host='127.0.0.1', port=int(os.environ['PUBLISHER_RUNTIME_PORT']), workers=1, access_log=False)
+    import socket
+    import sys
+    import threading
+    inherited = os.environ.pop('PUBLISHER_RUNTIME_SOCKET', '')
+    parent_pipe = os.environ.pop('PUBLISHER_RUNTIME_PARENT_PIPE', '')
+    if parent_pipe and (parent_pipe != '1' or inherited != 'shared-v1' or os.name != 'nt'):
+        raise SystemExit('Invalid runtime parent monitor')
+    if inherited == 'shared-v1' and os.name == 'nt':
+        length = int.from_bytes(sys.stdin.buffer.read(4), 'big')
+        if not 1 <= length <= 4096:
+            raise SystemExit('Invalid runtime listener')
+        shared = sys.stdin.buffer.read(length)
+        if len(shared) != length:
+            raise SystemExit('Incomplete runtime listener')
+        listener = socket.fromshare(shared)
+    elif inherited.startswith('fd:') and os.name != 'nt':
+        listener = socket.socket(fileno=int(inherited[3:]))
+    elif inherited:
+        raise SystemExit('Invalid runtime listener')
+    else:
+        uvicorn.run(runtime_app(), host='127.0.0.1', port=int(os.environ['PUBLISHER_RUNTIME_PORT']), workers=1, access_log=False)
+        return
+    with listener:
+        if listener.getsockname() != ('127.0.0.1', int(os.environ['PUBLISHER_RUNTIME_PORT'])):
+            raise SystemExit('Runtime listener identity mismatch')
+        server = uvicorn.Server(uvicorn.Config(runtime_app(), host='127.0.0.1',
+            port=int(os.environ['PUBLISHER_RUNTIME_PORT']), workers=1, access_log=False, log_config=None))
+        if parent_pipe:
+            def watch_parent():
+                try:
+                    while sys.stdin.buffer.read(1):
+                        pass
+                except (OSError, ValueError):
+                    pass
+                # Uvicorn invokes lifespan shutdown, which waits for the
+                # admitted work and sender drain. Never terminate on a timer.
+                server.should_exit = True
+            threading.Thread(target=watch_parent, name='runtime-parent', daemon=True).start()
+        server.run(sockets=[listener])
 
 
 if __name__ == '__main__':

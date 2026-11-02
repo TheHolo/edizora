@@ -1,0 +1,4946 @@
+{
+  "kind": "exploratory-not-acceptance",
+  "date": "2026-10-30",
+  "machine": {
+    "os": "Windows 11 build 26200",
+    "webview2": "156.0.4314.56",
+    "logical_cpus": 32,
+    "ram_gib": 47.56,
+    "processor": "AMD64 Family 26 Model 68 Stepping 0"
+  },
+  "fixture": {
+    "publications": 10000,
+    "channels": 20,
+    "queued": 1000,
+    "album_links": 16666,
+    "telegram_token": false,
+    "ai_profiles": false
+  },
+  "limitations": [
+    "Host readiness rather than UI readiness",
+    "Point-in-time memory samples, not average idle or peak",
+    "No cold boots",
+    "Too few samples for p95",
+    "Not the reference machine"
+  ],
+  "before": {
+    "installer_id": "032cf379165e4f409a5684634acc2920",
+    "samples": [
+      {
+        "sample": 1,
+        "host_ready_ms": 6603.1,
+        "private_bytes_after_1s": 662708224,
+        "processes": [
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 248877056
+          },
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 233283584
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 81522688
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 39682048
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 29048832
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12664832
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 8122368
+          },
+          {
+            "name": "edizora-prototype.exe",
+            "private_bytes": 6930432
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 2576384
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "installer_id": "248cd2a4cb174bd284a61818b6971571",
+    "installer_sha256": "c55d17b0a4155a85acf3671420d8ecdaa3f63ca42ba3e0b26670a4e093726b62",
+    "samples": [
+      {
+        "sample": 1,
+        "host_ready_ms": 4369.6,
+        "private_bytes_after_1s": 391122944,
+        "processes": [
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 112254976
+          },
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 97808384
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 81833984
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 41037824
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 27877376
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12603392
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 8101888
+          },
+          {
+            "name": "edizora-prototype.exe",
+            "private_bytes": 7024640
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 2580480
+          }
+        ]
+      },
+      {
+        "sample": 2,
+        "host_ready_ms": 4304.8,
+        "private_bytes_after_1s": 388972544,
+        "processes": [
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 111415296
+          },
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 97992704
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 81469440
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 39497728
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 28532736
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12197888
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 8130560
+          },
+          {
+            "name": "edizora-prototype.exe",
+            "private_bytes": 7151616
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 2584576
+          }
+        ]
+      },
+      {
+        "sample": 3,
+        "host_ready_ms": 4335.7,
+        "private_bytes_after_1s": 377298944,
+        "processes": [
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 99938304
+          },
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 98177024
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 80388096
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 40370176
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 28758016
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12091392
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 8101888
+          },
+          {
+            "name": "edizora-prototype.exe",
+            "private_bytes": 6909952
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 2564096
+          }
+        ]
+      }
+    ],
+    "idle_60s_samples": [
+      {
+        "sample": 1,
+        "host_ready_ms": 4385.6,
+        "private_bytes_after_60s": 417538048,
+        "processes": [
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 137629696
+          },
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 97677312
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 80932864
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 38912000
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 31948800
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12148736
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 8040448
+          },
+          {
+            "name": "edizora-prototype.exe",
+            "private_bytes": 6889472
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 3358720
+          }
+        ]
+      }
+    ]
+  },
+  "after_paged_scan": {
+    "installer_id": "0aa283d1eb614eab92be360851f99800",
+    "installer_sha256": "5a7f835cdbfe52511e6efc202e56d8239b02232f0fe251e9096535343b07f082",
+    "samples": [
+      {
+        "sample": 1,
+        "host_ready_ms": 4428.7,
+        "private_bytes_after_5s": 374157312,
+        "processes": [
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 96264192,
+            "pid": 30332,
+            "created_ticks": 134378229126235915,
+            "cpu_ticks": 13281250
+          },
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 94822400,
+            "pid": 30620,
+            "created_ticks": 134378229141093915,
+            "cpu_ticks": 9375000
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 81465344,
+            "pid": 22924,
+            "created_ticks": 134378229123085157,
+            "cpu_ticks": 3281250
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 40275968,
+            "pid": 43904,
+            "created_ticks": 134378229121347915,
+            "cpu_ticks": 63125000
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 31055872,
+            "pid": 3284,
+            "created_ticks": 134378229124111157,
+            "cpu_ticks": 1250000
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12595200,
+            "pid": 34088,
+            "created_ticks": 134378229123096505,
+            "cpu_ticks": 1406250
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 8122368,
+            "pid": 24104,
+            "created_ticks": 134378229123339336,
+            "cpu_ticks": 468750
+          },
+          {
+            "name": "edizora-prototype.exe",
+            "private_bytes": 6975488,
+            "pid": 42276,
+            "created_ticks": 134378229120698153,
+            "cpu_ticks": 4531250
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 2580480,
+            "pid": 20948,
+            "created_ticks": 134378229122093611,
+            "cpu_ticks": 156250
+          }
+        ],
+        "idle_window": {
+          "seconds": 60.0,
+          "samples": 60,
+          "cpu_percent_of_one_core": 14.505,
+          "cpu_percent_of_machine": 0.453,
+          "sampled_peak_private_bytes": 381440000,
+          "final_private_bytes": 379756544
+        }
+      }
+    ],
+    "note": "Exploratory idle sample while build and tests were also running"
+  },
+  "after_database_change_detection": {
+    "installer_id": "d5e142fedc1441b5b6f160e78a8bb1a2",
+    "installer_sha256": "54beeeba4e14dcdceae50c88175c864ed5a8a541ff72472ad47b737711d3f7c2",
+    "samples": [
+      {
+        "sample": 1,
+        "host_ready_ms": 4392.6,
+        "private_bytes_after_5s": 357703680,
+        "processes": [
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 89812992,
+            "pid": 28808,
+            "created_ticks": 134378234757689582,
+            "cpu_ticks": 10468750
+          },
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 83161088,
+            "pid": 29332,
+            "created_ticks": 134378234770091486,
+            "cpu_ticks": 6250000
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 81526784,
+            "pid": 30192,
+            "created_ticks": 134378234755058236,
+            "cpu_ticks": 3281250
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 40755200,
+            "pid": 42376,
+            "created_ticks": 134378234753899428,
+            "cpu_ticks": 55000000
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 32198656,
+            "pid": 36736,
+            "created_ticks": 134378234756912042,
+            "cpu_ticks": 1875000
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12505088,
+            "pid": 2884,
+            "created_ticks": 134378234755071172,
+            "cpu_ticks": 1562500
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 8122368,
+            "pid": 39892,
+            "created_ticks": 134378234755288076,
+            "cpu_ticks": 468750
+          },
+          {
+            "name": "edizora-prototype.exe",
+            "private_bytes": 7053312,
+            "pid": 10388,
+            "created_ticks": 134378234753292565,
+            "cpu_ticks": 5000000
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 2568192,
+            "pid": 12952,
+            "created_ticks": 134378234754128814,
+            "cpu_ticks": 156250
+          }
+        ],
+        "idle_window": {
+          "seconds": 60.0,
+          "samples": 60,
+          "cpu_percent_of_one_core": 9.635,
+          "cpu_percent_of_machine": 0.301,
+          "sampled_peak_private_bytes": 362696704,
+          "final_private_bytes": 361148416,
+          "process_cpu": [
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 42376,
+              "cpu_ticks": 30312500
+            },
+            {
+              "name": "edizora-prototype.exe",
+              "pid": 10388,
+              "cpu_ticks": 10625000
+            },
+            {
+              "name": "edizora-backend.exe",
+              "pid": 29332,
+              "cpu_ticks": 7812500
+            },
+            {
+              "name": "edizora-backend.exe",
+              "pid": 28808,
+              "cpu_ticks": 4531250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 36736,
+              "cpu_ticks": 1718750
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 2884,
+              "cpu_ticks": 1406250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 30192,
+              "cpu_ticks": 1250000
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 12952,
+              "cpu_ticks": 156250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 39892,
+              "cpu_ticks": 0
+            }
+          ]
+        }
+      }
+    ],
+    "note": "60-second sample after five seconds settling; prototype at pre-login screen"
+  },
+  "warm_visible_login": {
+    "installer_id": "7b3d2819cb794bbc850438b286ccb6f3",
+    "installer_sha256": "2a7eac1314a03ced540253b767e929ef478dfe039b0f2e468ff77fb9cb8ac75f",
+    "samples": [
+      {
+        "sample": 1,
+        "driver_handshake_ms": 339.6,
+        "visible_login_ms": 2452.8,
+        "process_start_offset_ms": 4.4,
+        "visible_login_from_process_ms": 2448.4
+      },
+      {
+        "sample": 2,
+        "driver_handshake_ms": 1964.9,
+        "visible_login_ms": 3644.0,
+        "process_start_offset_ms": 1642.1,
+        "visible_login_from_process_ms": 2001.9
+      },
+      {
+        "sample": 3,
+        "driver_handshake_ms": 1940.8,
+        "visible_login_ms": 4067.9,
+        "process_start_offset_ms": 1626.9,
+        "visible_login_from_process_ms": 2441.0
+      },
+      {
+        "sample": 4,
+        "driver_handshake_ms": 1931.4,
+        "visible_login_ms": 4067.0,
+        "process_start_offset_ms": 1621.0,
+        "visible_login_from_process_ms": 2446.0
+      },
+      {
+        "sample": 5,
+        "driver_handshake_ms": 2033.7,
+        "visible_login_ms": 4155.2,
+        "process_start_offset_ms": 1650.6,
+        "visible_login_from_process_ms": 2504.6
+      },
+      {
+        "sample": 6,
+        "driver_handshake_ms": 1962.4,
+        "visible_login_ms": 3698.3,
+        "process_start_offset_ms": 1617.0,
+        "visible_login_from_process_ms": 2081.3
+      },
+      {
+        "sample": 7,
+        "driver_handshake_ms": 1979.7,
+        "visible_login_ms": 4116.9,
+        "process_start_offset_ms": 1646.3,
+        "visible_login_from_process_ms": 2470.6
+      },
+      {
+        "sample": 8,
+        "driver_handshake_ms": 1911.9,
+        "visible_login_ms": 4048.1,
+        "process_start_offset_ms": 1607.8,
+        "visible_login_from_process_ms": 2440.3
+      },
+      {
+        "sample": 9,
+        "driver_handshake_ms": 2004.5,
+        "visible_login_ms": 3692.5,
+        "process_start_offset_ms": 1647.7,
+        "visible_login_from_process_ms": 2044.8
+      },
+      {
+        "sample": 10,
+        "driver_handshake_ms": 1924.0,
+        "visible_login_ms": 4042.1,
+        "process_start_offset_ms": 1611.6,
+        "visible_login_from_process_ms": 2430.5
+      },
+      {
+        "sample": 11,
+        "driver_handshake_ms": 1941.8,
+        "visible_login_ms": 4060.5,
+        "process_start_offset_ms": 1618.3,
+        "visible_login_from_process_ms": 2442.2
+      },
+      {
+        "sample": 12,
+        "driver_handshake_ms": 1936.7,
+        "visible_login_ms": 4054.9,
+        "process_start_offset_ms": 1624.2,
+        "visible_login_from_process_ms": 2430.7
+      },
+      {
+        "sample": 13,
+        "driver_handshake_ms": 1944.1,
+        "visible_login_ms": 3669.1,
+        "process_start_offset_ms": 1629.3,
+        "visible_login_from_process_ms": 2039.8
+      },
+      {
+        "sample": 14,
+        "driver_handshake_ms": 1944.8,
+        "visible_login_ms": 4062.6,
+        "process_start_offset_ms": 1612.8,
+        "visible_login_from_process_ms": 2449.8
+      },
+      {
+        "sample": 15,
+        "driver_handshake_ms": 1945.4,
+        "visible_login_ms": 4060.9,
+        "process_start_offset_ms": 1626.1,
+        "visible_login_from_process_ms": 2434.8
+      },
+      {
+        "sample": 16,
+        "driver_handshake_ms": 1941.6,
+        "visible_login_ms": 3665.6,
+        "process_start_offset_ms": 1623.3,
+        "visible_login_from_process_ms": 2042.4
+      },
+      {
+        "sample": 17,
+        "driver_handshake_ms": 1945.4,
+        "visible_login_ms": 4097.6,
+        "process_start_offset_ms": 1620.0,
+        "visible_login_from_process_ms": 2477.7
+      },
+      {
+        "sample": 18,
+        "driver_handshake_ms": 1932.5,
+        "visible_login_ms": 4051.0,
+        "process_start_offset_ms": 1617.3,
+        "visible_login_from_process_ms": 2433.7
+      },
+      {
+        "sample": 19,
+        "driver_handshake_ms": 1973.1,
+        "visible_login_ms": 4091.6,
+        "process_start_offset_ms": 1651.6,
+        "visible_login_from_process_ms": 2440.0
+      },
+      {
+        "sample": 20,
+        "driver_handshake_ms": 1929.6,
+        "visible_login_ms": 4057.6,
+        "process_start_offset_ms": 1617.7,
+        "visible_login_from_process_ms": 2439.9
+      }
+    ],
+    "process_median_ms": 2439.95,
+    "process_p95_nearest_rank_ms": 2477.7,
+    "driver_median_ms": 4056.25,
+    "driver_p95_nearest_rank_ms": 4116.9,
+    "limitations": [
+      "driver elapsed includes WebDriver handshake overhead",
+      "process timing requires a visible descendant",
+      "no cold boots",
+      "not necessarily the reference machine",
+      "login form only",
+      "machine is not the reference configuration"
+    ],
+    "measured_local_date": "2026-10-31"
+  },
+  "parallel_start_and_idle": {
+    "installer_id": "7b3d2819cb794bbc850438b286ccb6f3",
+    "installer_sha256": "2a7eac1314a03ced540253b767e929ef478dfe039b0f2e468ff77fb9cb8ac75f",
+    "samples": [
+      {
+        "sample": 1,
+        "host_ready_ms": 2228.5,
+        "private_bytes_after_5s": 350121984,
+        "webview_process_count": 6,
+        "processes": [
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 89554944,
+            "pid": 25860,
+            "created_ticks": 134378506928075508,
+            "cpu_ticks": 10937500
+          },
+          {
+            "name": "edizora-backend.exe",
+            "private_bytes": 83214336,
+            "pid": 38316,
+            "created_ticks": 134378506940057153,
+            "cpu_ticks": 7500000
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 80805888,
+            "pid": 31304,
+            "created_ticks": 134378506929997425,
+            "cpu_ticks": 2812500
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 38326272,
+            "pid": 34376,
+            "created_ticks": 134378506928403951,
+            "cpu_ticks": 40937500
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 28356608,
+            "pid": 8332,
+            "created_ticks": 134378506930802897,
+            "cpu_ticks": 781250
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12558336,
+            "pid": 30308,
+            "created_ticks": 134378506930017020,
+            "cpu_ticks": 2343750
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 8130560,
+            "pid": 31568,
+            "created_ticks": 134378506930242168,
+            "cpu_ticks": 937500
+          },
+          {
+            "name": "edizora-prototype.exe",
+            "private_bytes": 6610944,
+            "pid": 30780,
+            "created_ticks": 134378506927913959,
+            "cpu_ticks": 937500
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "private_bytes": 2564096,
+            "pid": 29640,
+            "created_ticks": 134378506928543418,
+            "cpu_ticks": 0
+          }
+        ],
+        "idle_window": {
+          "seconds": 60.0,
+          "samples": 60,
+          "cpu_percent_of_one_core": 4.635,
+          "cpu_percent_of_machine": 0.145,
+          "sampled_peak_private_bytes": 353497088,
+          "final_private_bytes": 350740480,
+          "process_cpu": [
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 34376,
+              "cpu_ticks": 14531250
+            },
+            {
+              "name": "edizora-backend.exe",
+              "pid": 38316,
+              "cpu_ticks": 6562500
+            },
+            {
+              "name": "edizora-backend.exe",
+              "pid": 25860,
+              "cpu_ticks": 5625000
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 30308,
+              "cpu_ticks": 781250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 8332,
+              "cpu_ticks": 156250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 29640,
+              "cpu_ticks": 156250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 31304,
+              "cpu_ticks": 0
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "pid": 31568,
+              "cpu_ticks": 0
+            },
+            {
+              "name": "edizora-prototype.exe",
+              "pid": 30780,
+              "cpu_ticks": 0
+            }
+          ]
+        }
+      }
+    ],
+    "limitations": [
+      "host readiness only; UI is on the pre-login prototype screen",
+      "a memory sample can precede startup of some WebView child processes",
+      "one-second interval samples can miss brief process or memory peaks",
+      "no cold boots",
+      "too few samples for p95"
+    ]
+  },
+  "stage2_6654": {
+    "installer_id": "6654cca599ec4ad9a42c447df5666976",
+    "installer_sha256": "b18305b6fc0bc048b74e2e00c79aa6a12f10fae0b04418e0d294510426fcafc4",
+    "application_sha256": "8f098c434c1541b11cd9e0ae1d1c825b40a0e308ae3638e0be00f699140c4529",
+    "warm_visible_login": {
+      "samples": [
+        {
+          "sample": 1,
+          "driver_handshake_ms": 421.5,
+          "visible_login_ms": 2266.5,
+          "process_start_offset_ms": 5.0,
+          "visible_login_from_process_ms": 2261.6
+        },
+        {
+          "sample": 2,
+          "driver_handshake_ms": 449.6,
+          "visible_login_ms": 2303.9,
+          "process_start_offset_ms": 4.4,
+          "visible_login_from_process_ms": 2299.6
+        },
+        {
+          "sample": 3,
+          "driver_handshake_ms": 395.8,
+          "visible_login_ms": 2269.7,
+          "process_start_offset_ms": 5.2,
+          "visible_login_from_process_ms": 2264.6
+        }
+      ],
+      "process_median_ms": 2264.6,
+      "process_p95_nearest_rank_ms": null,
+      "limitations": [
+        "driver elapsed includes WebDriver handshake overhead",
+        "process timing requires a visible descendant",
+        "no cold boots",
+        "not necessarily the reference machine"
+      ]
+    },
+    "idle_sample": {
+      "sample": 1,
+      "host_ready_ms": 2226.7,
+      "private_bytes_after_5s": 354611200,
+      "webview_process_count": 6,
+      "processes": [
+        {
+          "name": "edizora-backend.exe",
+          "private_bytes": 90427392
+        },
+        {
+          "name": "edizora-backend.exe",
+          "private_bytes": 83042304
+        },
+        {
+          "name": "msedgewebview2.exe",
+          "private_bytes": 81653760
+        },
+        {
+          "name": "msedgewebview2.exe",
+          "private_bytes": 40038400
+        },
+        {
+          "name": "msedgewebview2.exe",
+          "private_bytes": 28102656
+        },
+        {
+          "name": "msedgewebview2.exe",
+          "private_bytes": 12701696
+        },
+        {
+          "name": "msedgewebview2.exe",
+          "private_bytes": 8876032
+        },
+        {
+          "name": "edizora-prototype.exe",
+          "private_bytes": 7184384
+        },
+        {
+          "name": "msedgewebview2.exe",
+          "private_bytes": 2584576
+        }
+      ],
+      "idle_window": {
+        "seconds": 60.0,
+        "samples": 60,
+        "cpu_percent_of_one_core": 6.927,
+        "cpu_percent_of_machine": 0.216,
+        "sampled_peak_private_bytes": 357695488,
+        "final_private_bytes": 354209792,
+        "process_cpu": [
+          {
+            "name": "msedgewebview2.exe",
+            "cpu_ticks": 14687500
+          },
+          {
+            "name": "edizora-prototype.exe",
+            "cpu_ticks": 11093750
+          },
+          {
+            "name": "edizora-backend.exe",
+            "cpu_ticks": 8437500
+          },
+          {
+            "name": "edizora-backend.exe",
+            "cpu_ticks": 5312500
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "cpu_ticks": 1718750
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "cpu_ticks": 156250
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "cpu_ticks": 156250
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "cpu_ticks": 0
+          },
+          {
+            "name": "msedgewebview2.exe",
+            "cpu_ticks": 0
+          }
+        ]
+      }
+    },
+    "limitations": [
+      "exploratory only; not the reference machine",
+      "no cold boots",
+      "three warm starts are insufficient for p95",
+      "pre-login screen, not the full application"
+    ]
+  },
+  "stage2_3908": {
+    "installer_id": "39080bb6acd748e38f1b70d7f4e5346b",
+    "installer_sha256": "c4b4ebc20738ff7a97fe6bdd57c9497c68474d06f9645a04513cf7206c65d2ca",
+    "application_sha256": "a5d09637f2d3a287d6727da525445922d8abfc534265c9fd489d0d0c1544cc83",
+    "webview2": "156.0.4314.58",
+    "warm_visible_login": {
+      "samples": [
+        {
+          "sample": 1,
+          "driver_handshake_ms": 388.2,
+          "visible_login_ms": 2569.7,
+          "process_start_offset_ms": 4.3,
+          "visible_login_from_process_ms": 2565.4
+        },
+        {
+          "sample": 2,
+          "driver_handshake_ms": 397.9,
+          "visible_login_ms": 2448.0,
+          "process_start_offset_ms": 5.7,
+          "visible_login_from_process_ms": 2442.2
+        },
+        {
+          "sample": 3,
+          "driver_handshake_ms": 347.7,
+          "visible_login_ms": 2243.2,
+          "process_start_offset_ms": 5.1,
+          "visible_login_from_process_ms": 2238.1
+        },
+        {
+          "sample": 4,
+          "driver_handshake_ms": 365.7,
+          "visible_login_ms": 2218.2,
+          "process_start_offset_ms": 4.3,
+          "visible_login_from_process_ms": 2213.9
+        },
+        {
+          "sample": 5,
+          "driver_handshake_ms": 347.3,
+          "visible_login_ms": 2190.4,
+          "process_start_offset_ms": 6.1,
+          "visible_login_from_process_ms": 2184.3
+        },
+        {
+          "sample": 6,
+          "driver_handshake_ms": 326.4,
+          "visible_login_ms": 2463.5,
+          "process_start_offset_ms": 5.0,
+          "visible_login_from_process_ms": 2458.5
+        },
+        {
+          "sample": 7,
+          "driver_handshake_ms": 382.5,
+          "visible_login_ms": 2367.0,
+          "process_start_offset_ms": 4.6,
+          "visible_login_from_process_ms": 2362.4
+        },
+        {
+          "sample": 8,
+          "driver_handshake_ms": 347.1,
+          "visible_login_ms": 2208.4,
+          "process_start_offset_ms": 6.5,
+          "visible_login_from_process_ms": 2202.0
+        },
+        {
+          "sample": 9,
+          "driver_handshake_ms": 344.2,
+          "visible_login_ms": 2350.8,
+          "process_start_offset_ms": 5.3,
+          "visible_login_from_process_ms": 2345.5
+        },
+        {
+          "sample": 10,
+          "driver_handshake_ms": 365.8,
+          "visible_login_ms": 2280.0,
+          "process_start_offset_ms": 4.8,
+          "visible_login_from_process_ms": 2275.3
+        },
+        {
+          "sample": 11,
+          "driver_handshake_ms": 427.1,
+          "visible_login_ms": 2359.5,
+          "process_start_offset_ms": 4.1,
+          "visible_login_from_process_ms": 2355.4
+        },
+        {
+          "sample": 12,
+          "driver_handshake_ms": 348.1,
+          "visible_login_ms": 2263.2,
+          "process_start_offset_ms": 5.0,
+          "visible_login_from_process_ms": 2258.2
+        },
+        {
+          "sample": 13,
+          "driver_handshake_ms": 357.3,
+          "visible_login_ms": 2220.3,
+          "process_start_offset_ms": 4.0,
+          "visible_login_from_process_ms": 2216.3
+        },
+        {
+          "sample": 14,
+          "driver_handshake_ms": 362.2,
+          "visible_login_ms": 2283.1,
+          "process_start_offset_ms": 5.1,
+          "visible_login_from_process_ms": 2278.0
+        },
+        {
+          "sample": 15,
+          "driver_handshake_ms": 324.6,
+          "visible_login_ms": 2265.4,
+          "process_start_offset_ms": 5.3,
+          "visible_login_from_process_ms": 2260.0
+        },
+        {
+          "sample": 16,
+          "driver_handshake_ms": 396.7,
+          "visible_login_ms": 2499.2,
+          "process_start_offset_ms": 4.7,
+          "visible_login_from_process_ms": 2494.5
+        },
+        {
+          "sample": 17,
+          "driver_handshake_ms": 382.1,
+          "visible_login_ms": 2326.8,
+          "process_start_offset_ms": 4.0,
+          "visible_login_from_process_ms": 2322.8
+        },
+        {
+          "sample": 18,
+          "driver_handshake_ms": 375.6,
+          "visible_login_ms": 2264.5,
+          "process_start_offset_ms": 4.4,
+          "visible_login_from_process_ms": 2260.2
+        },
+        {
+          "sample": 19,
+          "driver_handshake_ms": 396.5,
+          "visible_login_ms": 2277.8,
+          "process_start_offset_ms": 6.7,
+          "visible_login_from_process_ms": 2271.1
+        },
+        {
+          "sample": 20,
+          "driver_handshake_ms": 365.1,
+          "visible_login_ms": 2250.6,
+          "process_start_offset_ms": 4.8,
+          "visible_login_from_process_ms": 2245.8
+        }
+      ],
+      "process_median_ms": 2273.2,
+      "process_p95_nearest_rank_ms": 2494.5,
+      "limitations": [
+        "driver elapsed includes WebDriver handshake overhead",
+        "process timing requires a visible descendant",
+        "no cold boots",
+        "not necessarily the reference machine"
+      ]
+    },
+    "limitations": [
+      "exploratory only; not the reference machine",
+      "no cold boots",
+      "pre-login screen, not the full application"
+    ],
+    "idle_samples": [
+      {
+        "sample": 1,
+        "host_ready_ms": 2245.1,
+        "private_bytes_after_5s": 346738688,
+        "webview_process_count": 6,
+        "processes": [
+          {
+            "process": "process-1",
+            "name": "edizora-backend.exe",
+            "private_bytes": 90402816,
+            "cpu_ticks": 10468750
+          },
+          {
+            "process": "process-2",
+            "name": "edizora-backend.exe",
+            "private_bytes": 83226624,
+            "cpu_ticks": 6875000
+          },
+          {
+            "process": "process-3",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 80551936,
+            "cpu_ticks": 2812500
+          },
+          {
+            "process": "process-4",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 36323328,
+            "cpu_ticks": 7968750
+          },
+          {
+            "process": "process-5",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 26783744,
+            "cpu_ticks": 1250000
+          },
+          {
+            "process": "process-6",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12042240,
+            "cpu_ticks": 1093750
+          },
+          {
+            "process": "process-7",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 7839744,
+            "cpu_ticks": 625000
+          },
+          {
+            "process": "process-8",
+            "name": "edizora-prototype.exe",
+            "private_bytes": 6987776,
+            "cpu_ticks": 781250
+          },
+          {
+            "process": "process-9",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 2580480,
+            "cpu_ticks": 312500
+          }
+        ],
+        "idle_window": {
+          "seconds": 60.0,
+          "samples": 60,
+          "cpu_percent_of_one_core": 3.125,
+          "cpu_percent_of_machine": 0.098,
+          "sampled_peak_private_bytes": 350330880,
+          "final_private_bytes": 349757440,
+          "process_cpu": [
+            {
+              "name": "edizora-backend.exe",
+              "cpu_ticks": 8593750
+            },
+            {
+              "name": "edizora-backend.exe",
+              "cpu_ticks": 6562500
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 2656250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 312500
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 312500
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 156250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 156250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 0
+            },
+            {
+              "name": "edizora-prototype.exe",
+              "cpu_ticks": 0
+            }
+          ]
+        }
+      },
+      {
+        "sample": 1,
+        "host_ready_ms": 2206.8,
+        "private_bytes_after_5s": 346488832,
+        "webview_process_count": 6,
+        "processes": [
+          {
+            "process": "process-1",
+            "name": "edizora-backend.exe",
+            "private_bytes": 89907200,
+            "cpu_ticks": 11875000
+          },
+          {
+            "process": "process-2",
+            "name": "edizora-backend.exe",
+            "private_bytes": 83095552,
+            "cpu_ticks": 7187500
+          },
+          {
+            "process": "process-3",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 80183296,
+            "cpu_ticks": 2656250
+          },
+          {
+            "process": "process-4",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 36118528,
+            "cpu_ticks": 6562500
+          },
+          {
+            "process": "process-5",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 26918912,
+            "cpu_ticks": 937500
+          },
+          {
+            "process": "process-6",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 12079104,
+            "cpu_ticks": 1093750
+          },
+          {
+            "process": "process-7",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 7843840,
+            "cpu_ticks": 312500
+          },
+          {
+            "process": "process-8",
+            "name": "edizora-prototype.exe",
+            "private_bytes": 7753728,
+            "cpu_ticks": 625000
+          },
+          {
+            "process": "process-9",
+            "name": "msedgewebview2.exe",
+            "private_bytes": 2588672,
+            "cpu_ticks": 156250
+          }
+        ],
+        "idle_window": {
+          "seconds": 60.0,
+          "samples": 60,
+          "cpu_percent_of_one_core": 2.526,
+          "cpu_percent_of_machine": 0.079,
+          "sampled_peak_private_bytes": 350212096,
+          "final_private_bytes": 347320320,
+          "timeline": [
+            {
+              "elapsed_seconds": 1.0011,
+              "private_bytes": 346525696,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 11875000
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7343750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36126720,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 26943488,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12079104,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 2.0024,
+              "private_bytes": 346529792,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12031250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7343750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36126720,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 26947584,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12079104,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 3.0044,
+              "private_bytes": 346587136,
+              "cpu_ticks_delta": 468750,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12187500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7656250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36184064,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 26947584,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12079104,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 4.0058,
+              "private_bytes": 346595328,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12187500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7656250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 26947584,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12091392,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 5.0072,
+              "private_bytes": 346583040,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12187500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7656250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 26947584,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12079104,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 6.0084,
+              "private_bytes": 346857472,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12187500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7812500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27217920,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 7.0096,
+              "private_bytes": 346857472,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12187500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7812500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27217920,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 8.0106,
+              "private_bytes": 346857472,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12187500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7812500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27217920,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 9.0121,
+              "private_bytes": 346857472,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12187500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7812500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27217920,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 10.013,
+              "private_bytes": 346857472,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12187500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 7812500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27217920,
+                  "cpu_ticks": 937500
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 11.0143,
+              "private_bytes": 347086848,
+              "cpu_ticks_delta": 781250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12343750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 8281250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27447296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 12.0155,
+              "private_bytes": 347168768,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12343750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 8281250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36261888,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27447296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 13.0168,
+              "private_bytes": 347086848,
+              "cpu_ticks_delta": 468750,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12656250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 8437500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80187392,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6562500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27447296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 14.0177,
+              "private_bytes": 347095040,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12656250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 8437500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80191488,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36184064,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27447296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 15.0192,
+              "private_bytes": 347090944,
+              "cpu_ticks_delta": 312500,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12812500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 8593750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80191488,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36179968,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27447296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 16.0203,
+              "private_bytes": 347127808,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 12968750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 8593750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80191488,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36212736,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27451392,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 17.0217,
+              "private_bytes": 347123712,
+              "cpu_ticks_delta": 937500,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 13281250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 9218750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80191488,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36208640,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27451392,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 18.0226,
+              "private_bytes": 347123712,
+              "cpu_ticks_delta": 781250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 13281250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 10000000
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80191488,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36208640,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27451392,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 19.0237,
+              "private_bytes": 347123712,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 13281250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 10156250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80191488,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36208640,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27451392,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 20.0247,
+              "private_bytes": 347123712,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 13281250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 10156250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80191488,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36208640,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27451392,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 21.0263,
+              "private_bytes": 347148288,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 13281250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 10156250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80191488,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36208640,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27475968,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 22.028,
+              "private_bytes": 347148288,
+              "cpu_ticks_delta": 781250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 89907200,
+                  "cpu_ticks": 13593750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 10625000
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80191488,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36208640,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27475968,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7753728,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 2588672,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 23.0292,
+              "private_bytes": 348106752,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 13593750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 10781250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80134144,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36319232,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 27475968,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12083200,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3424256,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 24.0303,
+              "private_bytes": 349708288,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 13750000
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 10781250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80134144,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36130816,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29364224,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 25.0314,
+              "private_bytes": 349700096,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 13750000
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 10781250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 36130816,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29360128,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 26.0326,
+              "private_bytes": 349872128,
+              "cpu_ticks_delta": 625000,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 14062500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11093750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35962880,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29700096,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 27.0341,
+              "private_bytes": 349769728,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 14062500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11250000
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35860480,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29700096,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 28.0354,
+              "private_bytes": 349769728,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 14062500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11250000
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35860480,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29700096,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 29.0365,
+              "private_bytes": 349769728,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 14062500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11250000
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35860480,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29700096,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 30.0377,
+              "private_bytes": 349769728,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 14218750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11250000
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35860480,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29700096,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 31.0389,
+              "private_bytes": 349777920,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 14375000
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11250000
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29704192,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 32.0405,
+              "private_bytes": 349777920,
+              "cpu_ticks_delta": 312500,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90042368,
+                  "cpu_ticks": 14531250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11406250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29704192,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 33.0422,
+              "private_bytes": 349913088,
+              "cpu_ticks_delta": 312500,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90177536,
+                  "cpu_ticks": 14687500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11562500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29704192,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 34.043,
+              "private_bytes": 349913088,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90177536,
+                  "cpu_ticks": 14843750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11562500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29704192,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 35.0442,
+              "private_bytes": 349913088,
+              "cpu_ticks_delta": 312500,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90177536,
+                  "cpu_ticks": 15000000
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11718750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29704192,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 36.0451,
+              "private_bytes": 349917184,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90177536,
+                  "cpu_ticks": 15000000
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11718750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29708288,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 37.0464,
+              "private_bytes": 350191616,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 15156250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11718750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29708288,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3469312,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 38.0475,
+              "private_bytes": 350171136,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 15156250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 11718750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29708288,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 39.0489,
+              "private_bytes": 350171136,
+              "cpu_ticks_delta": 781250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 15625000
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 12031250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29708288,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 40.0498,
+              "private_bytes": 350171136,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 15625000
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 12031250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29708288,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 41.0516,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 15625000
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 12031250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 42.0529,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 15781250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 12031250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 43.054,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 468750,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 16093750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 12187500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 44.0551,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 781250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 16406250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 12656250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 45.0568,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 16406250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 12656250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 46.0578,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 625000,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 16718750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 12968750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 47.0592,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 312500,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 16718750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 13281250
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 48.0606,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 468750,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 17031250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 13437500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 49.0616,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 17031250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 13593750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 50.0627,
+              "private_bytes": 350183424,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 17031250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 13593750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35864576,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29720576,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 51.0641,
+              "private_bytes": 350212096,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 17187500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 13593750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35868672,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29745152,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 52.0653,
+              "private_bytes": 350212096,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90451968,
+                  "cpu_ticks": 17343750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 13593750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 35868672,
+                  "cpu_ticks": 6718750
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29745152,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11939840,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7843840,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7688192,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 53.0666,
+              "private_bytes": 347742208,
+              "cpu_ticks_delta": 1093750,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90349568,
+                  "cpu_ticks": 17656250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 83095552,
+                  "cpu_ticks": 14062500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 80130048,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 33894400,
+                  "cpu_ticks": 7031250
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29745152,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11673600,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7745536,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7659520,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3448832,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 54.0678,
+              "private_bytes": 347574272,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90349568,
+                  "cpu_ticks": 17656250
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 82993152,
+                  "cpu_ticks": 14062500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 79892480,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 33841152,
+                  "cpu_ticks": 7031250
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29745152,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11980800,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7745536,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7659520,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3366912,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 55.0694,
+              "private_bytes": 347602944,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90349568,
+                  "cpu_ticks": 17812500
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 82993152,
+                  "cpu_ticks": 14062500
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 79892480,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 33853440,
+                  "cpu_ticks": 7031250
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29745152,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11997184,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7745536,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7659520,
+                  "cpu_ticks": 625000
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3366912,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 56.0706,
+              "private_bytes": 347574272,
+              "cpu_ticks_delta": 625000,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90349568,
+                  "cpu_ticks": 17968750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 82993152,
+                  "cpu_ticks": 14218750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 79892480,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 34078720,
+                  "cpu_ticks": 7187500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29495296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 11993088,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7745536,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7659520,
+                  "cpu_ticks": 781250
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3366912,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 57.0716,
+              "private_bytes": 347246592,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90349568,
+                  "cpu_ticks": 17968750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 82993152,
+                  "cpu_ticks": 14218750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 79892480,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 33734656,
+                  "cpu_ticks": 7187500
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29495296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12009472,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7745536,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7659520,
+                  "cpu_ticks": 781250
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3366912,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 58.073,
+              "private_bytes": 347533312,
+              "cpu_ticks_delta": 937500,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90349568,
+                  "cpu_ticks": 17968750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 82993152,
+                  "cpu_ticks": 14218750
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 79892480,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 34021376,
+                  "cpu_ticks": 8125000
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29495296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12009472,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7745536,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7659520,
+                  "cpu_ticks": 781250
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3366912,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 59.0743,
+              "private_bytes": 347348992,
+              "cpu_ticks_delta": 156250,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90349568,
+                  "cpu_ticks": 17968750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 82993152,
+                  "cpu_ticks": 14375000
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 79892480,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 33832960,
+                  "cpu_ticks": 8125000
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29495296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12013568,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7745536,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7659520,
+                  "cpu_ticks": 781250
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3366912,
+                  "cpu_ticks": 156250
+                }
+              ]
+            },
+            {
+              "elapsed_seconds": 60.0017,
+              "private_bytes": 347320320,
+              "cpu_ticks_delta": 0,
+              "processes": [
+                {
+                  "process": "process-1",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 90349568,
+                  "cpu_ticks": 17968750
+                },
+                {
+                  "process": "process-2",
+                  "name": "edizora-backend.exe",
+                  "private_bytes": 82993152,
+                  "cpu_ticks": 14375000
+                },
+                {
+                  "process": "process-3",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 79892480,
+                  "cpu_ticks": 2656250
+                },
+                {
+                  "process": "process-4",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 33832960,
+                  "cpu_ticks": 8125000
+                },
+                {
+                  "process": "process-5",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 29495296,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-6",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 12013568,
+                  "cpu_ticks": 1093750
+                },
+                {
+                  "process": "process-7",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 7745536,
+                  "cpu_ticks": 312500
+                },
+                {
+                  "process": "process-8",
+                  "name": "edizora-prototype.exe",
+                  "private_bytes": 7630848,
+                  "cpu_ticks": 781250
+                },
+                {
+                  "process": "process-9",
+                  "name": "msedgewebview2.exe",
+                  "private_bytes": 3366912,
+                  "cpu_ticks": 156250
+                }
+              ]
+            }
+          ],
+          "process_cpu": [
+            {
+              "name": "edizora-backend.exe",
+              "cpu_ticks": 7187500
+            },
+            {
+              "name": "edizora-backend.exe",
+              "cpu_ticks": 6093750
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 1562500
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 156250
+            },
+            {
+              "name": "edizora-prototype.exe",
+              "cpu_ticks": 156250
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 0
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 0
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 0
+            },
+            {
+              "name": "msedgewebview2.exe",
+              "cpu_ticks": 0
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

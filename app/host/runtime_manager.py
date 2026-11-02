@@ -1,16 +1,17 @@
 import asyncio
 import os
+import socket
 import subprocess
 import sys
 import time
 
 from app.api.rpc import RuntimeClient
-from app.application.platform import PlatformError
+from app.application.errors import PlatformError
 
 
 class RuntimeManager(RuntimeClient):
     """Host-owned process lifecycle and receiving-node command acknowledgments."""
-    def __init__(self, origin, token, store, environment):
+    def __init__(self, origin, token, store, environment, *, prebind=False):
         super().__init__(origin, token)
         self.store, self.environment = store, environment
         self.process = None
@@ -18,6 +19,7 @@ class RuntimeManager(RuntimeClient):
         self.process_lock = asyncio.Lock()
         self.quiesced = False
         self.on_start=None
+        self.prebind = prebind
 
     def status(self):
         value = {'running': self.process is not None and self.process.poll() is None,
@@ -52,8 +54,44 @@ class RuntimeManager(RuntimeClient):
                 if name == 'DESKTOP_AI_CONNECTIONS':continue
                 if configured or secrets_store.manages_environment():self.environment[name]=secrets_store.read(name) or ''
             from app.process import module_command
-            self.process = subprocess.Popen(module_command('app.api.runtime'), env=self.environment,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+            if self.prebind:
+                # Hold the listener from bind through child startup: no other
+                # local process can claim the runtime port or receive its token.
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+                    if os.name == 'nt':
+                        listener.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+                    listener.bind(('127.0.0.1', 0))
+                    listener.listen(128)
+                    port = listener.getsockname()[1]
+                    self.origin = f'http://127.0.0.1:{port}'
+                    self.environment['PUBLISHER_RUNTIME_PORT'] = str(port)
+                    environment = dict(self.environment)
+                    if os.name == 'nt':
+                        environment['PUBLISHER_RUNTIME_SOCKET'] = 'shared-v1'
+                        # The remaining pipe is a lifetime signal, not a control
+                        # channel. On host death EOF lets the runtime drain its
+                        # own writers before releasing the sender lock.
+                        environment['PUBLISHER_RUNTIME_PARENT_PIPE'] = '1'
+                        self.process = subprocess.Popen(module_command('app.api.runtime'), env=environment,
+                            stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                            creationflags=subprocess.CREATE_NO_WINDOW)
+                        try:
+                            shared = listener.share(self.process.pid)
+                            self.process.stdin.write(len(shared).to_bytes(4, 'big') + shared)
+                            self.process.stdin.flush()
+                        except BaseException:
+                            self.process.stdin.close()
+                            raise
+                    else:
+                        environment['PUBLISHER_RUNTIME_SOCKET'] = f'fd:{listener.fileno()}'
+                        self.process = subprocess.Popen(module_command('app.api.runtime'), env=environment,
+                            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                            pass_fds=(listener.fileno(),))
+            else:
+                environment = dict(self.environment)
+                environment.pop('PUBLISHER_RUNTIME_SOCKET', None)
+                self.process = subprocess.Popen(module_command('app.api.runtime'), env=environment,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
             self.status()
             for _ in range(150):
                 if self.process.poll() is not None:
@@ -93,6 +131,8 @@ class RuntimeManager(RuntimeClient):
                 # Termination is permitted only after explicit freeze proof; no send can be killed.
                 self.process.terminate()
                 await asyncio.to_thread(self.process.wait, 15)
+            if self.process is not None and self.process.stdin is not None:
+                self.process.stdin.close()
             self.status()
 
     async def resume(self):

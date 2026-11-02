@@ -26,18 +26,33 @@ def safe_path(root: Path, key: str) -> Path:
 
 
 def store_bytes(root: Path, payload: bytes, *, max_bytes=50*1024*1024, require_image=True):
-    if not payload or len(payload) > max_bytes:
+    return store_stream(root, io.BytesIO(payload), max_bytes=max_bytes, require_image=require_image)
+
+
+def store_stream(root: Path, source, *, max_bytes=50*1024*1024, require_image=True):
+    """Validate and install a seekable file without copying its original into JSON or RAM."""
+    source.seek(0)
+    digest_state = hashlib.sha256()
+    size = 0
+    while chunk := source.read(1024 * 1024):
+        size += len(chunk)
+        if size > max_bytes:
+            raise ValueError("Empty file or upload size limit exceeded")
+        digest_state.update(chunk)
+    if not size:
         raise ValueError("Empty file or upload size limit exceeded")
     mime = "application/octet-stream"
     width = height = None
     thumbnail = None
     if require_image:
         try:
-            with Image.open(io.BytesIO(payload), formats=["JPEG", "PNG", "WEBP", "GIF"]) as image:
+            source.seek(0)
+            with Image.open(source, formats=["JPEG", "PNG", "WEBP", "GIF"]) as image:
                 if image.width * image.height > 80_000_000:
                     raise ValueError("Image dimensions exceed safe limit")
                 image.verify()
-            with Image.open(io.BytesIO(payload), formats=["JPEG", "PNG", "WEBP", "GIF"]) as image:
+            source.seek(0)
+            with Image.open(source, formats=["JPEG", "PNG", "WEBP", "GIF"]) as image:
                 mime = Image.MIME.get(image.format, "application/octet-stream")
                 width, height = image.size
                 image.thumbnail((640,640))
@@ -46,13 +61,45 @@ def store_bytes(root: Path, payload: bytes, *, max_bytes=50*1024*1024, require_i
                 thumbnail = result.getvalue()
         except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as error:
             raise ValueError("File content is not a safe image") from error
-    digest = hashlib.sha256(payload).hexdigest()
+    digest = digest_state.hexdigest()
     key = f"assets/{digest[:2]}/{digest}"
-    _install(root, key, payload)
+    _install_stream(root, key, source, digest, size)
     thumbnail_key = f"thumbnails/{digest[:2]}/{digest}.jpg" if thumbnail else None
     if thumbnail_key:
         _install(root, thumbnail_key, thumbnail)
-    return {"id":str(uuid4()),"storage_key":key,"sha256":digest,"mime_type":mime,"size":len(payload),"width":width,"height":height,"state":"available","thumbnail_key":thumbnail_key}
+    return {"id":str(uuid4()),"storage_key":key,"sha256":digest,"mime_type":mime,"size":size,"width":width,"height":height,"state":"available","thumbnail_key":thumbnail_key}
+
+
+def _install_stream(root, key, source, digest, size):
+    path = safe_path(root, key)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        existing = hashlib.sha256()
+        with path.open('rb') as stream:
+            while chunk := stream.read(1024 * 1024):
+                existing.update(chunk)
+        if existing.hexdigest() != digest:
+            raise ValueError("Immutable asset hash mismatch")
+        return
+    temporary = path.with_name(path.name + "." + uuid4().hex + ".tmp")
+    try:
+        source.seek(0)
+        written = hashlib.sha256()
+        written_size = 0
+        with temporary.open('xb') as stream:
+            while chunk := source.read(1024 * 1024):
+                written_size += len(chunk)
+                if written_size > size:
+                    raise ValueError("Upload changed during storage")
+                written.update(chunk)
+                stream.write(chunk)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if written_size != size or written.hexdigest() != digest:
+            raise ValueError("Upload changed during storage")
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def _install(root, key, payload):

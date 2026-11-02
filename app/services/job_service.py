@@ -11,7 +11,7 @@ from sqlalchemy.sql import ColumnElement
 from app.db.models import Channel, Job, JobEvent, Publication, User, ApplicationState, CommandReceipt, utcnow
 from app.domain.enums import ACTIVE_JOB_STATUSES, ContentKind, JobStatus
 from app.domain.models import MediaItem, SourcePost
-from app.services.translation_service import TRANSLATION_FIELDS
+from app.services.translation_fields import TRANSLATION_FIELDS
 
 QUEUE_FILTER_STATUSES = {
     "active": ACTIVE_JOB_STATUSES,

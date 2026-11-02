@@ -5,7 +5,6 @@ import asyncio
 import json
 from uuid import uuid4
 
-import aiohttp
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from app.host.secrets import SecretStore
@@ -51,6 +50,7 @@ def public_profile(profile):
 
 
 async def probe(connection: Connection):
+    import aiohttp
     from app.news.llm_factory import create_news_client, list_model_ids
     from app.services.title_client import TitleTranslation
     settings = connection.settings()
@@ -111,17 +111,21 @@ async def add_connection(runtime, store, actor_id, connection, command_id=None):
 
 
 async def run_connections(runtime, control):
-    from app.news.facade import NewsSourceFacade
-    from app.news.http import PublicOnlyResolver
-    from app.worker_v1 import RegisteredWorker
-
-    class ConfiguredWorker(RegisteredWorker):
-        async def model_catalog(self):
-            return [self.settings.model_name]
-
     tasks = {}
 
     async def run_profile(profile):
+        # Extractors and worker dependencies are only needed once a profile
+        # exists. Importing them in an idle desktop host adds substantial
+        # startup time and memory even when AI is not configured.
+        import aiohttp
+        from app.news.facade import NewsSourceFacade
+        from app.news.http import PublicOnlyResolver
+        from app.worker_v1 import RegisteredWorker
+
+        class ConfiguredWorker(RegisteredWorker):
+            async def model_catalog(self):
+                return [self.settings.model_name]
+
         values = {k: profile[k] for k in Connection.model_fields if k in profile}
         settings = Connection(**values).settings()
         async with aiohttp.ClientSession(trust_env=False) as session, aiohttp.ClientSession(

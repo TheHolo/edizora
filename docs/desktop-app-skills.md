@@ -22,6 +22,15 @@ npx skills add anthropics/skills --skill webapp-testing
 
 Для воспроизводимости записать выбранный commit источника и фактический путь установки. React-skill содержит также Next.js-рекомендации: не переносить SSR/RSC и deployment на Vercel в desktop SPA. Design-skill не должен превращать рабочую панель в рекламный лендинг. Browser testing не покрывает Rust, tray, sidecar, installer и shutdown; это отдельные Windows-проверки. Общий networkidle не использовать как критерий готовности экранов с polling.
 
+### Версии, использованные при реализации прототипа
+
+Инструкции предварительно прочитаны; четыре выбранных skill скопированы в изолированный каталог `work/desktop-skills/sandbox/.agents/skills/` с помощью `npx skills add` и `--agent codex --copy`. Это локальная рабочая копия в игнорируемом `work/`, а не глобальная установка пользователя.
+
+- `vercel-labs/agent-skills`: commit `1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62`, skills `vercel-react-best-practices` и `web-design-guidelines`.
+- `anthropics/skills`: commit `ca45fc496a3436251f191354091d557da31c15b5`, skills `frontend-design` и `webapp-testing`.
+
+Требование ТЗ ожидать готовность по состоянию приложения имеет приоритет над советом webapp-testing ждать `networkidle`.
+
 ## Что найдено для Tauri
 
 CLI нашёл `nodnarbnitram/claude-code-extensions@tauri-v2` (~8,1 тыс. установок; карточка округляла до 8,0 тыс.). Однако [исходный репозиторий](https://github.com/nodnarbnitram/claude-code-extensions) имел всего 16 stars, автор сторонний. [Карточка](https://skills.sh/nodnarbnitram/claude-code-extensions/tauri-v2) также содержит непроверенные обещания экономии времени/токенов. В основной рекомендованный набор не включён; это кандидат на отдельное изучение, не доказанная best practice.

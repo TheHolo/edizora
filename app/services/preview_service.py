@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shutil
 from dataclasses import replace
 from datetime import datetime
@@ -5,19 +7,22 @@ from pathlib import Path
 from uuid import uuid4
 from uuid import uuid5,NAMESPACE_URL
 import asyncio
+from typing import TYPE_CHECKING
 
 from app.db.models import Job
 from app.domain.enums import ContentKind, MediaType
 from app.domain.exceptions import MediaValidationError
 from app.domain.models import MediaItem, PreparedMedia, SourcePost
 from app.services.caption_service import DEFAULT_TEMPLATE, CaptionService
-from app.services.download_service import DownloadService
-from app.services.media_service import MediaService
-from app.services.job_service import JobService
 from app.services.news_render_service import NewsRenderService
-from app.services.publisher_service import TelegramPublisher
-from app.services.translation_service import TranslationService
 from app.utils.tags import publication_tags
+
+if TYPE_CHECKING:
+    from app.services.download_service import DownloadService
+    from app.services.job_service import JobService
+    from app.services.media_service import MediaService
+    from app.services.publisher_service import TelegramPublisher
+    from app.services.translation_service import TranslationService
 
 
 def deserialize_post(data: dict) -> SourcePost:

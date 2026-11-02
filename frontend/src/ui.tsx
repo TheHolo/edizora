@@ -2,7 +2,7 @@ import { locale, t } from './i18n';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AlertCircle, Check, CheckCircle2, ChevronRight, Clock3, FileImage, FileText, Loader2, RefreshCw, ShieldAlert, WifiOff } from 'lucide-react';
-import { ApiError, hasBearer, mediaBlob, safeURL } from './api';
+import { acquireMedia, ApiError, safeURL } from './api';
 import { Link } from './navigation';
 import type { Operation, Publication } from './types';
 
@@ -52,21 +52,21 @@ export function Panel({ title, action, children, className = '' }: { title?: Rea
 }
 export function Thumbnail({ src, title, className = '' }: { src?: string | null; title: string; className?: string }) {
   const reference=useRef<HTMLSpanElement>(null);
-  const [resolved,setResolved]=useState<string|undefined>(hasBearer()?undefined:safeURL(src));
+  const [resolved,setResolved]=useState<{source:string;url:string}|undefined>();
   const [failed,setFailed]=useState(false);
   useEffect(()=>{
-    setFailed(false);
-    if(!src||!hasBearer()){setResolved(safeURL(src));return;}
-    let objectURL:string|undefined;const controller=new AbortController();
+    setFailed(false);setResolved(undefined);
+    if(!src)return;
+    let active=true;let release:(()=>void)|undefined;const controller=new AbortController();
     const observer=new IntersectionObserver(entries=>{
       if(!entries.some(entry=>entry.isIntersecting))return;
       observer.disconnect();
-      void mediaBlob(src,controller.signal).then(blob=>{objectURL=URL.createObjectURL(blob);setResolved(objectURL);}).catch(error=>{if(!(error instanceof DOMException&&error.name==='AbortError'))setFailed(true);});
+      void acquireMedia(src,controller.signal).then(resource=>{if(!active){resource.release();return;}release=resource.release;setResolved({source:src,url:resource.url});}).catch(error=>{if(active&&!(error instanceof DOMException&&error.name==='AbortError'))setFailed(true);});
     },{rootMargin:'150px'});
     if(reference.current)observer.observe(reference.current);
-    return()=>{observer.disconnect();controller.abort();if(objectURL)URL.revokeObjectURL(objectURL);};
+    return()=>{active=false;observer.disconnect();controller.abort();release?.();};
   },[src]);
-  return <span ref={reference} className={'thumbnail-holder '+className}>{resolved&&!failed?<img className="thumbnail" src={resolved} alt={title} loading="lazy" onError={()=>setFailed(true)}/>:<span className="thumbnail placeholder" role="img" aria-label={t("Изображение недоступно")}><FileImage size={25} strokeWidth={1.3}/></span>}</span>;
+  return <span ref={reference} className={'thumbnail-holder '+className}>{resolved&&resolved.source===src&&!failed?<img className="thumbnail" src={resolved.url} alt={title} loading="lazy" onError={()=>setFailed(true)}/>:<span className="thumbnail placeholder" role="img" aria-label={t("Изображение недоступно")}><FileImage size={25} strokeWidth={1.3}/></span>}</span>;
 }
 export function PublicationIdentity({ item }: { item: Publication }) {
   return <div className="publication-identity"><div className="thumbnail-wrap"><Thumbnail src={item.album?.cover} title={item.title} /></div><div><Link href={`/publications/${item.id}`} className="title-link">{item.title || t("Без названия")}</Link><div className="muted small">{item.source?.provider || ({ text: t("Текст"), news: t("Новость"), artwork: t("Изображения") }[item.content_kind] || t("Материал"))}{item.album?.total ? t(" · {0} из {1} кадров", [item.album.selected, item.album.total]) : ''}</div></div></div>;

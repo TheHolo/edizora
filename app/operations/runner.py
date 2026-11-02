@@ -1,9 +1,9 @@
 import asyncio
 import time
 from uuid import uuid4
-from sqlalchemy import select, text, or_
+from sqlalchemy import select, text, or_, and_, case, func
 from sqlalchemy.orm import selectinload
-from app.db.models import ApplicationState, Operation, OperationEvent, Job, MediaAsset, JobAsset, NewsTask, utcnow
+from app.db.models import ApplicationState, Channel, Operation, OperationEvent, Job, MediaAsset, JobAsset, NewsTask, utcnow
 from app.application.platform import channel_render_hash
 from app.services.job_service import serialize_post
 from app.services.preview_service import deserialize_post
@@ -38,14 +38,39 @@ class OperationRunner:
             await self.task
 
     async def run(self):
+        engine = self.platform.sessions.kw.get('bind')
+        database = engine.url.database if engine is not None else None
+        if (engine is not None and engine.dialect.name == 'sqlite' and database
+                and database != ':memory:' and 'mode=memory' not in str(engine.url)):
+            # data_version belongs to a connection, so keep this read-only
+            # observer checked out until the runner stops. Commits from other
+            # connections then signal that draft plans may need another scan.
+            async with engine.connect() as observer:
+                await self._run_loop(observer)
+        else:
+            # In-memory SQLite can reuse one underlying connection and cannot
+            # reliably observe its own commits with PRAGMA data_version.
+            await self._run_loop(None)
+
+    async def _run_loop(self, observer):
         next_preparation_check=0
+        last_data_version = None
         while not self.stopping:
             if self.platform.gate:
                 try:self.platform.gate.assert_mutation_allowed()
                 except RuntimeError:
                     await asyncio.sleep(.25);continue
             if time.monotonic()>=next_preparation_check:
-                await self._queue_preparations()
+                version = None
+                if observer is not None:
+                    version = (await observer.execute(text('PRAGMA data_version'))).scalar_one()
+                    # Do not keep a transaction or read lock across the sleep.
+                    await observer.commit()
+                if observer is None or version != last_data_version:
+                    # Record the version from *before* the scan so a concurrent
+                    # commit cannot be hidden by a later version read.
+                    await self._queue_preparations()
+                    last_data_version = version
                 next_preparation_check=time.monotonic()+1
             async with self.platform.sessions() as session:
                 await session.execute(text("BEGIN IMMEDIATE"))
@@ -84,22 +109,61 @@ class OperationRunner:
             state=await session.get(ApplicationState,1)
             if state and state.maintenance_state!="normal":
                 await session.rollback();return
-            jobs=(await session.scalars(select(Job).options(selectinload(Job.channel)).where(
-                Job.status=="waiting_confirmation"))).all()
-            for job in jobs:
-                if job.content_kind=="artwork" and not job.post_data.get("media_items"):continue
-                fingerprint=channel_render_hash(job.channel)
-                plan=job.render_plan or {}
-                if plan.get("job_version")==job.version and (
-                    plan.get("channel_render_hash")==fingerprint if "channel_render_hash" in plan
-                    else plan.get("channel_version")==job.channel.version):continue
-                previous=(await session.scalars(select(Operation).where(
-                    Operation.job_id==job.id,Operation.kind=="prepare",
-                    Operation.payload["job_version"].as_integer()==job.version))).all()
-                if any(op.payload.get("channel_render_hash",fingerprint)==fingerprint for op in previous):continue
-                self.platform._new_operation(session,job.created_by_user_id,"prepare",
-                    {"job_version":job.version,"channel_render_hash":fingerprint,"automatic":True},
-                    "Загружаем изображения и обновляем предпросмотр",job_id=job.id)
+            # Filter only plans that can be proven current in SQLite. Every
+            # other plan still goes through the original Python version and
+            # fingerprint checks below. Bound both the number of SQL parameters
+            # and the number of ORM objects held for large draft collections.
+            channels = (await session.scalars(select(Channel))).all()
+            fingerprints = {channel.id: channel_render_hash(channel) for channel in channels}
+            plan = Job.render_plan
+            numeric_types = ('integer', 'real', 'true', 'false')
+            job_version = func.json_extract(plan, '$.job_version')
+            channel_version = func.json_extract(plan, '$.channel_version')
+            hash_type = func.json_type(plan, '$.channel_render_hash')
+            same_job = and_(func.json_type(plan, '$.job_version').in_(numeric_types), job_version == Job.version)
+            same_legacy_channel = and_(hash_type.is_(None),
+                func.json_type(plan, '$.channel_version').in_(numeric_types), channel_version == Channel.version)
+            if len(fingerprints) <= 200 and fingerprints:
+                expected_hash = case(fingerprints, value=Job.target_channel_id)
+                same_hashed_channel = and_(hash_type == 'text',
+                    func.json_extract(plan, '$.channel_render_hash') == expected_hash)
+                same_channel = or_(same_legacy_channel, same_hashed_channel)
+            else:
+                # A very large channel catalog falls back to checking hashed
+                # plans in Python instead of constructing an unbounded CASE.
+                same_channel = same_legacy_channel
+            # Python's JSON decoder keeps the last duplicate key whereas
+            # SQLite's json_extract sees the first. Do not skip an ambiguous
+            # persisted plan; let the existing Python checks decide instead.
+            fields = func.json_each(plan).table_valued('key').alias('plan_fields')
+            duplicate_keys = (select(fields.c.key).where(fields.c.key.in_(
+                ('job_version', 'channel_version', 'channel_render_hash')))
+                .group_by(fields.c.key).having(func.count() > 1).exists())
+            already_prepared = and_(func.json_type(plan) == 'object', same_job, same_channel, ~duplicate_keys)
+            last_id = None
+            while True:
+                query = (select(Job).outerjoin(Job.channel).options(selectinload(Job.channel))
+                         .where(Job.status=="waiting_confirmation", func.coalesce(already_prepared, False).is_(False)))
+                if last_id is not None:
+                    query = query.where(Job.id > last_id)
+                jobs = (await session.scalars(query.order_by(Job.id).limit(128))).all()
+                if not jobs:
+                    break
+                last_id = jobs[-1].id
+                for job in jobs:
+                    if job.content_kind=="artwork" and not job.post_data.get("media_items"):continue
+                    fingerprint=fingerprints.get(job.target_channel_id) or channel_render_hash(job.channel)
+                    plan=job.render_plan or {}
+                    if plan.get("job_version")==job.version and (
+                        plan.get("channel_render_hash")==fingerprint if "channel_render_hash" in plan
+                        else plan.get("channel_version")==job.channel.version):continue
+                    previous=(await session.scalars(select(Operation).where(
+                        Operation.job_id==job.id,Operation.kind=="prepare",
+                        Operation.payload["job_version"].as_integer()==job.version))).all()
+                    if any(op.payload.get("channel_render_hash",fingerprint)==fingerprint for op in previous):continue
+                    self.platform._new_operation(session,job.created_by_user_id,"prepare",
+                        {"job_version":job.version,"channel_render_hash":fingerprint,"automatic":True},
+                        "Загружаем изображения и обновляем предпросмотр",job_id=job.id)
             await session.commit()
 
     async def _event(self,operation_id,status,stage,message,*,progress=None,result=None,error=None):

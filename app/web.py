@@ -45,9 +45,6 @@ def paths():
 
 
 async def trusted_setup(options, store, auth, data, database):
-    from app.db.models import User,ApplicationState
-    from app.services.job_service import JobService
-    from sqlalchemy import select
     if options.initialize and not options.admin_id:
         raise SystemExit('Для первичной настройки укажите --admin-id <Telegram ID>.')
     activation_intent = None
@@ -75,6 +72,8 @@ async def trusted_setup(options, store, auth, data, database):
                 raise SystemExit('Сначала корректно остановите текущие отправки.')
             await create_schema(engine)
         if options.initialize:
+            from app.db.models import ApplicationState
+            from app.services.job_service import JobService
             user = await JobService(sessions).ensure_user(options.admin_id, None, str(options.admin_id))
             if not store.node_path.exists():
                 from uuid import uuid4
@@ -92,6 +91,8 @@ async def trusted_setup(options, store, auth, data, database):
                 from app.runtime import mark_managed_checkout
                 mark_managed_checkout(store.root)
         if options.set_password:
+            from app.db.models import User
+            from sqlalchemy import select
             if not options.admin_id:
                 raise SystemExit('Для настройки пароля укажите --admin-id <Telegram ID>.')
             async with sessions() as session:
@@ -111,7 +112,11 @@ async def trusted_setup(options, store, auth, data, database):
         await engine.dispose()
 
 
-def run():
+class DesktopHostAlreadyRunning(RuntimeError):
+    """The caller must authenticate an existing host rather than start another."""
+
+
+def run(*, argv=None, desktop_socket=None, desktop_token=None, desktop_ready=None):
     parser = argparse.ArgumentParser(description='Edizora — управляемая веб-панель')
     parser.add_argument('--initialize', action='store_true', help='Доверенная первичная настройка пустой установки')
     parser.add_argument('--activate-initial-installation', action='store_true', help='Явно активировать пустой standby после установки; только вместе с --initialize')
@@ -126,7 +131,12 @@ def run():
     parser.add_argument('--stop', action='store_true', help='Корректно завершить управляемую установку')
     parser.add_argument('--host', default=os.environ.get('PUBLISHER_HOST', '127.0.0.1'))
     parser.add_argument('--port', type=int, default=int(os.environ.get('PUBLISHER_PORT', '8000')))
-    options = parser.parse_args()
+    options = parser.parse_args(argv)
+    if desktop_socket is not None and (desktop_token is None or desktop_ready is None
+            or not options.no_browser or options.host != '127.0.0.1'
+            or options.port != desktop_socket.getsockname()[1]
+            or os.environ.get('PUBLISHER_DESKTOP') != '1'):
+        raise ValueError('Invalid desktop host configuration')
     if options.activate_initial_installation and (not options.initialize or options.standby):
         parser.error('--activate-initial-installation требует --initialize без --standby')
     control, data, database = paths()
@@ -149,6 +159,8 @@ def run():
     try:
         lock.__enter__()
     except RuntimeError:
+        if desktop_socket is not None:
+            raise DesktopHostAlreadyRunning() from None
         if options.initialize or (options.upgrade and os.environ.get('PUBLISHER_DESKTOP') != '1') or options.set_password:
             raise SystemExit('Сначала корректно остановите работающий host.')
         if options.no_browser and os.environ.get('PUBLISHER_DESKTOP') == '1':
@@ -193,21 +205,25 @@ def run():
                 raise SystemExit('Рабочие публикации требуют локального data root вне OneDrive/UNC; SQLite должна находиться внутри него. Сначала составьте план переноса данных.')
         if options.standby and store.identity()['role'] == 'active':
             raise SystemExit('Активный узел нельзя превратить в standby параметром запуска. Используйте план переноса.')
-        _serve(options, control, data, database, store, auth, origin)
+        _serve(options, control, data, database, store, auth, origin,
+               desktop_socket=desktop_socket, desktop_token=desktop_token, desktop_ready=desktop_ready)
     finally:
         lock.__exit__()
 
 
-def _serve(options, control, data, database, store, auth, origin):
+def _serve(options, control, data, database, store, auth, origin, *,
+           desktop_socket=None, desktop_token=None, desktop_ready=None):
     import uvicorn
     if options.enable_bot:
         from dotenv import load_dotenv
         load_dotenv(override=False)
         from app.host.secrets import SecretStore
         SecretStore(store.root).bootstrap_environment(dict(os.environ))
-    with socket.socket() as probe:
-        probe.bind(('127.0.0.1', 0))
-        runtime_port = probe.getsockname()[1]
+    runtime_port = 0
+    if desktop_socket is None:
+        with socket.socket() as probe:
+            probe.bind(('127.0.0.1', 0))
+            runtime_port = probe.getsockname()[1]
     runtime_token, local_token = secrets.token_urlsafe(48), secrets.token_urlsafe(48)
     (control / 'host-control.key').write_text(local_token)
     (control / 'host-control.key').chmod(0o600)
@@ -215,7 +231,8 @@ def _serve(options, control, data, database, store, auth, origin):
            'PUBLISHER_DATABASE_PATH': str(database), 'PUBLISHER_RUNTIME_TOKEN': runtime_token,
            'PUBLISHER_RUNTIME_PORT': str(runtime_port), 'PUBLISHER_ENABLE_BOT': '1' if options.enable_bot else '0'}
     from app.host.runtime_manager import RuntimeManager
-    runtime = RuntimeManager(f'http://127.0.0.1:{runtime_port}', runtime_token, store, env)
+    runtime = RuntimeManager(f'http://127.0.0.1:{runtime_port}', runtime_token, store, env,
+                             prebind=desktop_socket is not None)
     admin_ids = {int(x.strip()) for x in os.environ.get('ADMIN_IDS', '').split(',') if x.strip()}
     if options.admin_id:
         admin_ids.add(options.admin_id)
@@ -229,6 +246,7 @@ def _serve(options, control, data, database, store, auth, origin):
     config = WebConfig(origin=origin, allowed_hosts={urlsplit(origin).hostname, '127.0.0.1', 'localhost', '::1'},
                        bot_token=os.environ.get('BOT_TOKEN', ''), admin_ids=admin_ids,
                        desktop=os.environ.get('PUBLISHER_DESKTOP') == '1',
+                       desktop_bridge_token=desktop_token,
                        frontend=Path(os.environ.get('PUBLISHER_FRONTEND_DIR', 'frontend/dist')))
     from app.host.secrets import SecretStore
     secret_store=SecretStore(store.root)
@@ -254,9 +272,10 @@ def _serve(options, control, data, database, store, auth, origin):
         tray = None
         if config.desktop:
             from app.desktop.ai import run_connections
-            from app.desktop.tray import start_tray
             desktop_ai = asyncio.create_task(run_connections(runtime, control), name='desktop-ai')
-            tray = start_tray(control.parent)
+            if desktop_socket is None:
+                from app.desktop.tray import start_tray
+                tray = start_tray(control.parent)
         manager_task = asyncio.create_task(runtime.consume_commands(), name='host-runtime-manager')
         deployment.recover_pending()
         scheduler_task=asyncio.create_task(deployment.scheduler_loop(),name='host-backup-scheduler')
@@ -293,7 +312,40 @@ def _serve(options, control, data, database, store, auth, origin):
         server.should_exit = True
         return {'status': 'stopping'}
 
-    server.run()
+    if desktop_socket is not None:
+        from app.desktop.headless import identity_proof, write_bridge_token
+        write_bridge_token(control, desktop_token)
+
+        @app.post('/_host/desktop-identity', include_in_schema=False)
+        async def desktop_identity(request: __import__('fastapi').Request):
+            from fastapi.responses import JSONResponse
+            if not request.client or request.client.host != '127.0.0.1':
+                return JSONResponse({'error': 'local_only'}, status_code=403)
+            try:
+                raw = bytearray()
+                async for chunk in request.stream():
+                    raw.extend(chunk)
+                    if len(raw) > 1024:
+                        raise ValueError('invalid challenge')
+                body = json.loads(raw)
+                challenge = body['challenge']
+                if not isinstance(challenge, str) or len(challenge) != 64 or any(c not in '0123456789abcdef' for c in challenge):
+                    raise ValueError('invalid challenge')
+            except (ValueError, KeyError, TypeError):
+                return JSONResponse({'error': 'invalid_challenge'}, status_code=400)
+            identity = store.identity()
+            return identity_proof(desktop_token, challenge, os.getpid(), origin, identity)
+
+        import threading
+        def notify_ready():
+            while not server.started and not server.should_exit:
+                time.sleep(.05)
+            if server.started:
+                desktop_ready(store.identity())
+        threading.Thread(target=notify_ready, name='desktop-ready', daemon=True).start()
+        server.run(sockets=[desktop_socket])
+    else:
+        server.run()
 
 
 if __name__ == '__main__':

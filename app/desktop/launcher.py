@@ -166,6 +166,7 @@ def recover_initial_moves(root):
 def setup_app(root, token, origin, on_complete):
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     busy = asyncio.Lock()
+    setup_state = {'completed': False, 'quiesced': False}
 
     @app.middleware("http")
     async def security(request: Request, call_next):
@@ -200,12 +201,23 @@ def setup_app(root, token, origin, on_complete):
     @app.post("/setup-api/initialize")
     async def submit(body: SetupInput):
         async with busy:
+            if setup_state['quiesced']:
+                return JSONResponse({"message": "Настройка останавливается; откройте приложение снова"}, 409)
             try:
                 await initialize(root, body)
             except ValueError as exc:
                 return JSONResponse({"message": str(exc)}, 422)
+            setup_state['completed'] = True
             on_complete()
             return {"status": "ready", "message": "Приложение установлено. Панель откроется автоматически."}
+
+    @app.post("/setup-api/quiesce")
+    async def quiesce():
+        # Serialize with initialization so a lost client response cannot be
+        # mistaken for an unstarted installation. Late submissions are refused.
+        async with busy:
+            setup_state['quiesced'] = True
+            return {'completed': setup_state['completed']}
 
     @app.get("/{path:path}")
     async def assets(path: str):

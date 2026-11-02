@@ -11,15 +11,10 @@ import aiohttp
 from app.domain.models import SourcePost
 from app.news.worker_errors import LlmError
 from app.services.title_client import LMStudioTitleClient, SelectedTitleClient
+from app.services.translation_fields import TRANSLATION_FIELDS
 
 logger = logging.getLogger(__name__)
 MYMEMORY_URL = "https://api.mymemory.translated.net/get"
-TRANSLATION_FIELDS = (
-    "title_translation", "title_language", "title_translation_provider",
-    "title_translation_target", "title_translation_source",
-)
-
-
 @dataclass(frozen=True)
 class CachedTranslation:
     result: tuple[str, str] | None

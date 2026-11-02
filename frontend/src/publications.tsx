@@ -1,8 +1,10 @@
 import { t } from './i18n';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useLocation, useNavigate as useRouterNavigate } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, Check, Clock3, FileImage, Grid2X2, History, ImagePlus, List, Loader2, Plus, Save, Search, Send, Sparkles, Trash2, Upload, X } from 'lucide-react';
-import { api, ApiError, safeURL, upload } from './api';
+import { api, ApiError, hasNativeFilePicker, pickNativeFiles, releaseNativeFiles, safeURL, upload } from './api';
+import type { UploadSource } from './platform/transport';
 import { useCommand, useDebounce, useQuery } from './hooks';
 import { Link, setUnsaved, useNavigate } from './navigation';
 import { operationMessage } from './operation-display';
@@ -12,7 +14,8 @@ import type { Asset, Channel, CommandResult, EventRecord, ID, Operation, Page, P
 export interface PageProps { channels: Channel[]; channelID: string; timezone: string; }
 const tabs = [{label:t("Все"),value:''},{label:t("Черновики"),value:'waiting_confirmation'},{label:t("В очереди"),value:'queue'},{label:t("История"),value:'history'}];
 export function Publications({ channels, channelID, timezone }: PageProps) {
-  const initial = new URLSearchParams(location.search);
+  const routerLocation=useLocation();const routerNavigate=useRouterNavigate();
+  const initial = new URLSearchParams(routerLocation.search);
   const [search,setSearch] = useState(initial.get('search') || '');
   const debounced = useDebounce(search,300);
   const [status,setStatus] = useState(initial.get('status') || '');
@@ -47,8 +50,9 @@ export function Publications({ channels, channelID, timezone }: PageProps) {
     if(kind) p.set('content_kind',kind);
     if(from) p.set('date_from',from);
     if(until) p.set('date_to',until);
-    history.replaceState(null,'','/publications'+(p.size?'?'+p:''));
-  },[debounced,status,kind,channelID,from,until]);
+    const next='/publications'+(p.size?'?'+p:'');
+    if(routerLocation.pathname+routerLocation.search!==next)routerNavigate(next,{replace:true});
+  },[debounced,status,kind,channelID,from,until,routerLocation.pathname,routerLocation.search,routerNavigate]);
   function choose(id: ID, version: number) {
     setSelected(previous => {const next=new Map(previous); if(next.has(id)) next.delete(id); else next.set(id,version); return next;});
   }
@@ -121,10 +125,10 @@ export function CreatePublication({channels,channelID}:PageProps) {
     const payload={content_kind:kind,title,body,urls:source.split(/\n+/).map(v=>v.trim()).filter(Boolean),source_url:source.trim().split('\n')[0] || undefined,channel_id:Number(channel),tags:tags.split(/[\s,]+/).filter(Boolean),asset_ids:assets};
     await command.run(()=>api<CommandResult>(kind==='news'?'/publications/news':kind==='text'?'/publications/text-draft':'/publications/import',{method:'POST',body:payload}),r=>{setUnsaved(false);navigate(r.operation_id?'/operations/'+r.operation_id:'/publications/'+(r.publication_id || r.job_id || r.id));});
   }
-  async function addFiles(files:FileList|null) {
-    if(!files)return;setUploading(true);setUploadError(null);
-    try{for(const file of Array.from(files)){const asset=await upload(file);setAssets(v=>[...v,asset.id]);setFilenames(v=>[...v,file.name]);}}
-    catch(e){setUploadError(e);}finally{setUploading(false);}
+  async function addFiles(select:()=>Promise<UploadSource[]>) {
+    let files:UploadSource[]=[];setUploading(true);setUploadError(null);
+    try{files=await select();for(const file of files){const asset=await upload(file);setAssets(v=>[...v,asset.id]);setFilenames(v=>[...v,file.name]);}}
+    catch(e){setUploadError(e);}finally{await releaseNativeFiles(files).catch(()=>undefined);setUploading(false);}
   }
   return <>
     <Heading title={t("Новая публикация")} subtitle={t("Подготовим материал и сохраним его как черновик")} eyebrow={<Link href="/publications"><ArrowLeft size={14}/>{t("Публикации")}</Link>}/>
@@ -133,7 +137,7 @@ export function CreatePublication({channels,channelID}:PageProps) {
       {kind!=='text' && <label>{kind==='artwork'?t("Ссылки на изображения"):t("Ссылка на источник")}<textarea rows={kind==='artwork'?5:2} value={source} onChange={e=>setSource(e.target.value)} placeholder={kind==='artwork'?t("Ссылка Pixiv, DeviantArt или прямое изображение\nКаждая ссылка — с новой строки"):t("Публичная статья, YouTube-видео или Telegram-пост")}/><span className="field-hint">{kind==='artwork'?t("Для каждой ссылки будет отдельный результат."):t("Можно вместо ссылки вставить исходный текст ниже. Закрытые каналы недоступны. Если в видео нет субтитров, речь распознаётся локально.")}</span></label>}
       <label>{t("Название")}{kind==='text'?'':t(" (необязательно)")}<input value={title} onChange={e=>setTitle(e.target.value)} placeholder={t("Как назвать материал")} required={kind==='text'}/></label>
       {kind!=='artwork' && <label>{kind==='news'?t("Исходный текст"):t("Текст публикации")}<textarea value={body} onChange={e=>setBody(e.target.value)} rows={10} placeholder={kind==='news'?t("Вставьте материал для обработки домашней моделью…"):t("Напишите текст…")} required={kind==='text'}/></label>}
-      <label className="upload-zone"><Upload size={24}/><strong>{uploading?t("Загружаем файлы…"):t("Добавить файлы")}</strong><span>{t("Изображения и медиа — с проверкой на сервере")}</span><input type="file" multiple accept="image/*,video/*" disabled={uploading} onChange={e=>void addFiles(e.target.files)}/></label>
+      {hasNativeFilePicker()?<button type="button" className="upload-zone" disabled={uploading} onClick={()=>void addFiles(pickNativeFiles)}><Upload size={24}/><strong>{uploading?t("Загружаем файлы…"):t("Добавить файлы")}</strong><span>{t("Изображения и медиа — с проверкой на сервере")}</span></button>:<label className="upload-zone"><Upload size={24}/><strong>{uploading?t("Загружаем файлы…"):t("Добавить файлы")}</strong><span>{t("Изображения и медиа — с проверкой на сервере")}</span><input type="file" multiple accept="image/*,video/*" disabled={uploading} onChange={e=>{const files=Array.from(e.currentTarget.files||[]);e.currentTarget.value='';void addFiles(()=>Promise.resolve(files));}}/></label>}
       {filenames.length>0 && <ul className="uploaded-files">{filenames.map((name,i)=><li key={name+'-'+i}><FileImage size={16}/><span>{name}</span><button type="button" className="icon-button" aria-label={t("Убрать ")+name} onClick={()=>{setFilenames(v=>v.filter((_,index)=>index!==i));setAssets(v=>v.filter((_,index)=>index!==i));}}><X size={15}/></button></li>)}</ul>}
       <ErrorBlock error={uploadError}/>
     </Panel><div><Panel title={t("Параметры публикации")}>
@@ -266,13 +270,14 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
     const order=new Map(selected.map((a,i)=>[a.id,i]));
     setDragID(null);void saveAssets(assets.map(a=>({...a,order:order.get(a.id)??a.order})));
   }
-  async function replaceFiles(files:FileList|null){
-    if(!files)return;const job=await save();if(!job)return;setUploading(true);setAssetError(null);
+  async function replaceFiles(select:()=>Promise<UploadSource[]>) {
+    let files:UploadSource[]=[];setUploading(true);setAssetError(null);
     try{
-      const uploaded=[];for(const file of Array.from(files))uploaded.push((await upload(file)).id);
+      files=await select();if(!files.length)return;const job=await save();if(!job)return;
+      const uploaded=[];for(const file of files)uploaded.push((await upload(file)).id);
       const result=await api<Publication>('/publications/'+id,{method:'PATCH',body:{expected_version:job.version,asset_ids:uploaded}});
       query.setData(result);setAssets(result.assets||[]);
-    }catch(e){setAssetError(e);}finally{setUploading(false);}
+    }catch(e){setAssetError(e);}finally{await releaseNativeFiles(files).catch(()=>undefined);setUploading(false);}
   }
   async function applyLocalToLatest(){
     await command.run(()=>api<Publication>('/publications/'+id),fresh=>{
@@ -322,7 +327,7 @@ export function Editor({id,channels,timezone}:PageProps & {id:string}) {
           </div>}
         </article>)}</div>
         {!assets.length&&<Empty title={job.content_kind==='text'?t("Текст без изображений"):t("Медиа пока нет")} description={job.content_kind==='text'?t("Можно добавить изображения или опубликовать только текст."):t("Подготовьте материал или добавьте файлы.")}/>}
-        {editable&&<label className="button secondary full file-button"><ImagePlus size={17}/>{uploading?t("Загружаем…"):t("Заменить медиа")}<input type="file" accept="image/*,video/*" multiple disabled={uploading} onChange={e=>void replaceFiles(e.target.files)}/></label>}
+        {editable&&(hasNativeFilePicker()?<button type="button" className="button secondary full file-button" disabled={uploading} onClick={()=>void replaceFiles(pickNativeFiles)}><ImagePlus size={17}/>{uploading?t("Загружаем…"):t("Заменить медиа")}</button>:<label className="button secondary full file-button"><ImagePlus size={17}/>{uploading?t("Загружаем…"):t("Заменить медиа")}<input type="file" accept="image/*,video/*" multiple disabled={uploading} onChange={e=>{const files=Array.from(e.currentTarget.files||[]);e.currentTarget.value='';void replaceFiles(()=>Promise.resolve(files));}}/></label>)}
         <ErrorBlock error={assetError}/>
       </Panel>
       <Panel title={t("Основная информация")} className="editor-fields">

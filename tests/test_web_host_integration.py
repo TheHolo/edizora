@@ -11,6 +11,7 @@ from app.deployment.controller import DeploymentService, LocalNodeTarget
 from app.host.control import ControlStore
 from app.host.runtime_manager import RuntimeManager
 from app.api.auth import AuthStore,AuthError
+from app.runtime import InstanceLock
 import pytest
 
 
@@ -82,3 +83,50 @@ async def test_real_runtime_processes_stop_swap_and_resume_after_handoff(tmp_pat
         for manager in managers:
             await manager.close_and_drain('test-cleanup')
             await manager.stop()
+
+
+@pytest.mark.skipif(os.name != 'nt', reason='The inherited socket and lifetime pipe are Windows-specific')
+async def test_desktop_runtime_drains_after_its_host_pipe_closes(tmp_path):
+    """A dead host cannot leave an independent sender behind or lose committed data."""
+    data = tmp_path / 'data'
+    data.mkdir()
+    database = data / 'database.db'
+    engine, sessions = create_database('sqlite+aiosqlite:///' + database.as_posix())
+    await create_schema(engine)
+    async with sessions() as session, session.begin():
+        session.add(User(id=1, telegram_user_id=17, is_active=True, is_admin=True))
+    await engine.dispose()
+    store = ControlStore(tmp_path / 'control')
+    store.initialize(system_id=str(uuid4()), data_root=data, role='active',
+                     release_id='integration', schema_version=SCHEMA_VERSION)
+    store.block('user_pause', 'fixture')
+    token = secrets.token_urlsafe(40)
+    env = {**os.environ, 'PUBLISHER_CONTROL_DIR': str(store.root), 'PUBLISHER_DATA_ROOT': str(data),
+           'PUBLISHER_DATABASE_PATH': str(database), 'PUBLISHER_RUNTIME_TOKEN': token,
+           'PUBLISHER_ENABLE_BOT': '0'}
+    manager = RuntimeManager('http://127.0.0.1:1', token, store, env, prebind=True)
+    try:
+        await manager.start()
+        original = manager.process
+        channel = await manager.create_channel(1, {'alias': 'crash-fixture', 'title': 'Persisted',
+                                                    'telegram_chat_id': '-100123'}, str(uuid4()))
+        with pytest.raises(RuntimeError):
+            with InstanceLock(store.root / 'runtime.lock'):
+                pass
+        # EOF is what the OS delivers when the host process disappears.
+        original.stdin.close()
+        assert await asyncio.wait_for(asyncio.to_thread(original.wait), timeout=30) == 0
+        with InstanceLock(store.root / 'runtime.lock'):
+            pass
+        assert not store.status()['publication_allowed']
+        assert not store.status()['active_sends']
+        await manager.start()
+        listing = await manager.list_channels(1)
+        assert any(item['id'] == channel['id'] for item in listing['items'])
+        await manager.close_and_drain('test-cleanup')
+        await manager.stop()
+    finally:
+        # This process belongs exclusively to the temporary, paused fixture.
+        if manager.process is not None and manager.process.poll() is None:
+            manager.process.terminate()
+            await asyncio.to_thread(manager.process.wait, 15)

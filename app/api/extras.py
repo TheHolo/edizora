@@ -6,10 +6,6 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from aiogram.exceptions import (
-    TelegramAPIError, TelegramBadRequest, TelegramForbiddenError, TelegramNetworkError,
-    TelegramNotFound, TelegramRetryAfter, TelegramServerError, TelegramUnauthorizedError,
-)
 from sqlalchemy import select, text
 
 from app.application.platform import PlatformService, PlatformError, iso
@@ -350,6 +346,10 @@ class WebPlatformService(PlatformService):
             channel = await session.get(Channel, channel_id)
             chat_id = channel.telegram_chat_id
         checking_channel = False
+        from aiogram.exceptions import (
+            TelegramAPIError, TelegramBadRequest, TelegramForbiddenError, TelegramNetworkError,
+            TelegramNotFound, TelegramRetryAfter, TelegramServerError, TelegramUnauthorizedError,
+        )
         try:
             me = await self.runtime.bot.get_me()
             checking_channel = True

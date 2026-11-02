@@ -1,6 +1,6 @@
 import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { api, ApiError, clearSession, mediaBlob, safeURL, setSession } from '../src/api.ts';
+import { api, ApiError, clearSession, mediaBlob, safeURL, setSession, upload } from '../src/api.ts';
 
 globalThis.window = new EventTarget();
 globalThis.window.location = { origin: 'https://publisher.test' };
@@ -84,4 +84,16 @@ test('wire channel fields and controller collection arrays normalize for the sam
   assert.equal(channels.items[0].interval_seconds,600);
   globalThis.fetch=async()=>response([{node_id:'test-node',role:'standby'}]);
   assert.equal((await api('/deployment/nodes')).items[0].node_id,'test-node');
+});
+
+test('web upload remains same-origin multipart with session protection', async () => {
+  setSession({ user: { id: 1 }, csrf_token: 'test-csrf', token: 'test-bearer' });
+  let captured;
+  globalThis.fetch = async (url, options) => { captured = { url, ...options }; return response({ id: 'fixture-asset' }); };
+  assert.deepEqual(await upload(new File(['fixture'], 'fixture.png', { type: 'image/png' })), { id: 'fixture-asset' });
+  assert.equal(captured.url, '/api/v1/assets/uploads');
+  assert.equal(captured.credentials, 'same-origin');
+  assert.equal(captured.headers['X-CSRF-Token'], 'test-csrf');
+  assert.equal(captured.headers.Authorization, 'Bearer test-bearer');
+  assert.equal(captured.body.get('file').name, 'fixture.png');
 });

@@ -14,7 +14,7 @@ if sys.stdin is None:
 
 if len(sys.argv) >= 3 and sys.argv[1] == '--publisher-module':
     module = sys.argv[2]
-    if module not in {'app.api.runtime', 'app.desktop.launcher'}:
+    if module not in {'app.api.runtime', 'app.desktop.launcher', 'app.desktop.headless'}:
         raise SystemExit('Unsupported child module')
     sys.argv = [sys.argv[0], *sys.argv[3:]]
     if module == 'app.api.runtime':

@@ -4,7 +4,7 @@ import inspect
 
 import httpx
 
-from app.application.platform import PlatformError
+from app.application.errors import PlatformError
 
 
 METHODS = frozenset('validate_actor user_for_telegram ping list_publications get_publication create_publication patch_publication delete_publication publication_action list_channels get_channel create_channel patch_channel archive_channel check_channel channel_statistics queue calendar reorder_queue bulk settings patch_settings operations operation operation_events operation_action apply_translation_proposal preview album put_album prepare apply_reimport config_import_plan config_import_apply history audit asset_metadata asset_content upload_asset ai_workers ai_models ai_tasks pair_worker revoke_worker ai_selection ai_task_action system_status publication_pause worker_command legacy_worker_command deployment_readiness prepare_handoff apply_overdue_policy'.split())
@@ -55,6 +55,31 @@ class RuntimeClient:
         async def remote(*args, **kwargs):
             return await self.call(name, *args, **kwargs)
         return remote
+
+    async def upload_asset_stream(self, actor_id, upload, *, max_bytes):
+        """Forward a bounded binary upload to the authenticated local runtime."""
+        from app.api.auth import AuthError
+        async def chunks():
+            size = 0
+            while chunk := await upload.read(256 * 1024):
+                size += len(chunk)
+                if size > max_bytes:
+                    raise AuthError('upload_too_large', 'Файл превышает допустимый размер', 413)
+                yield chunk
+        try:
+            async with httpx.AsyncClient(timeout=120, trust_env=False, follow_redirects=False) as client:
+                response = await client.post(self.origin + '/rpc/upload',
+                    headers={'Authorization': 'Bearer ' + self.token},
+                    params={'actor_id': actor_id, 'filename': (upload.filename or 'upload')[:255]},
+                    content=chunks())
+            value = response.json()
+        except (httpx.HTTPError, ValueError):
+            raise PlatformError(503, 'runtime_unavailable', 'Нет связи с приложением. Управляющая панель продолжает работать.') from None
+        if response.status_code != 200:
+            error = value.get('error', {})
+            raise PlatformError(response.status_code, error.get('code', 'runtime_error'),
+                                error.get('message', 'Приложение отклонило команду'))
+        return value
 
     async def close_and_drain(self, migration_id):
         # Drain may take as long as the current Telegram call; never kill it to satisfy a timeout.

@@ -1,27 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, ApiError } from './api';
+import type { Dispatch, SetStateAction } from 'react';
+import { useQuery as useServerQuery, useQueryClient } from '@tanstack/react-query';
+import { ApiError, getSessionScope } from './api';
+import { apiQueryKey, apiQueryOptions } from './shared/api/query';
 
 export function useQuery<T>(path: string | null, interval = 0) {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [revision, setRevision] = useState(0);
-  const reload = useCallback(() => setRevision(v => v + 1), []);
-  useEffect(() => {
-    if (!path) { setLoading(false); return; }
-    let alive = true; let timeout: ReturnType<typeof setTimeout>; let failures = 0;
-    const controller = new AbortController();
-    setLoading(true); setError(null);
-    async function load() {
-      try { const result = await api<T>(path!, { signal: controller.signal }); if (alive) { setData(result); setError(null); failures = 0; } }
-      catch (e) { if (alive && !(e instanceof DOMException && e.name === 'AbortError')) { setError(e as ApiError); failures++; } }
-      finally { if (alive) { setLoading(false); if (interval) timeout = setTimeout(load, Math.min(30000, interval * 2 ** failures)); } }
-    }
-    function refresh() { clearTimeout(timeout); void load(); }
-    void load(); window.addEventListener('online', refresh);
-    return () => { alive = false; clearTimeout(timeout); controller.abort(); window.removeEventListener('online', refresh); };
-  }, [path, interval, revision]);
-  return { data, error, loading, reload, setData };
+  const client = useQueryClient();
+  const scope = getSessionScope();
+  const query = useServerQuery(apiQueryOptions<T>(scope, path, interval));
+  const reload = useCallback(() => {
+    if (path) void client.invalidateQueries({ queryKey: apiQueryKey(scope, path), exact: true });
+  }, [client, path, scope]);
+  const setData: Dispatch<SetStateAction<T | null>> = useCallback(value => {
+    if (!path) return;
+    client.setQueryData<T | null>(apiQueryKey(scope, path), old =>
+      typeof value === 'function' ? (value as (current: T | null) => T | null)(old ?? null) : value,
+    );
+  }, [client, path, scope]);
+  return { data: query.data ?? null, error: query.error, loading: !!path && query.isLoading, reload, setData };
 }
 export function useCommand() {
   const [busy, setBusy] = useState(false); const [error, setError] = useState<ApiError | null>(null);

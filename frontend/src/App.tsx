@@ -2,10 +2,12 @@ import { t } from './i18n';
 import { version as appVersion } from '../package.json';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useLocation, useNavigate as useRouterNavigate, useNavigationType } from 'react-router-dom';
 import { Activity, ArrowRight, CalendarDays, ChevronDown, Cloud, FileText, KeyRound, LayoutGrid, List, Loader2, LogOut, Menu, MoreHorizontal, Send, Settings, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { api, ApiError, clearSession, setSession } from './api';
 import { useCommand, useQuery } from './hooks';
-import { canNavigate, Link, NavigationContext } from './navigation';
+import { Link, NavigationContext } from './navigation';
 import { CreatePublication, Editor, Publications } from './publications';
 import { AI, Calendar, Channels, OperationPage, Queue } from './management';
 import { Backups, DeploymentPage } from './deployment';
@@ -28,18 +30,23 @@ function Reauth({close}:{close:()=>void}){
   return <div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true" aria-labelledby="reauth-title"><button className="modal-close icon-button" onClick={close} aria-label={t("Закрыть")}><X size={19}/></button><KeyRound size={25}/><h2 id="reauth-title">{t("Подтвердите личность")}</h2><p className="muted">{t("Для изменения размещения и секретов требуется свежий вход. После подтверждения повторите выбранное действие.")}</p><ErrorBlock error={command.error}/><form onSubmit={e=>{e.preventDefault();void command.run(()=>api('/auth/reauth',{method:'POST',body:{password}}),close);}}><label>{t("Пароль администратора")}<input type="password" autoComplete="current-password" autoFocus value={password} onChange={e=>setPassword(e.target.value)} required/></label><button className="primary full" disabled={command.busy}>{t("Подтвердить")}</button></form></section></div>;
 }
 export default function App(){
+  const queryClient=useQueryClient();
   const [session,setCurrentSession]=useState<Session|null>(null);const [booting,setBooting]=useState(true);const [authError,setAuthError]=useState<unknown>(null);
-  const [route,setRoute]=useState(location.pathname+location.search);const [channelID,setChannelID]=useState('');const [more,setMore]=useState(false);const [reauth,setReauth]=useState(false);
+  const routerLocation=useLocation();const routerNavigate=useRouterNavigate();const navigationType=useNavigationType();
+  const route=routerLocation.pathname+routerLocation.search;const [channelID,setChannelID]=useState('');const [more,setMore]=useState(false);const [reauth,setReauth]=useState(false);
   const currentRoute=useRef(route);currentRoute.current=route;
   const navigationDepth=useRef(0);
-  const navigate=useCallback((path:string)=>{if(!canNavigate())return;history.pushState(null,'',path);navigationDepth.current++;setRoute(path);setMore(false);window.scrollTo({top:0});},[]);
-  function acceptSession(value:Session){setSession(value);setCurrentSession(value);setAuthError(null);setBooting(false);if(['/','/login','/setup'].includes(location.pathname)){history.replaceState(null,'','/publications');setRoute('/publications');}}
+  const lastLocationKey=useRef(routerLocation.key);
+  useEffect(()=>{if(lastLocationKey.current===routerLocation.key)return;lastLocationKey.current=routerLocation.key;if(navigationType==='PUSH')navigationDepth.current++;else if(navigationType==='POP')navigationDepth.current=Math.max(0,navigationDepth.current-1);},[routerLocation.key,navigationType]);
+  const navigate=useCallback((path:string)=>{routerNavigate(path);setMore(false);window.scrollTo({top:0});},[routerNavigate]);
+  function acceptSession(value:Session){queryClient.clear();setChannelID('');setSession(value);setCurrentSession(value);setAuthError(null);setBooting(false);if(['/','/login','/setup'].includes(routerLocation.pathname))routerNavigate('/publications',{replace:true});}
+  function forgetSession(){clearSession();queryClient.clear();setCurrentSession(null);setChannelID('');setMore(false);setReauth(false);}
   useEffect(()=>{
     const cleanup=setupTelegram();let active=true;
     async function boot(){
       try{
         const fragment=new URLSearchParams(location.hash.slice(1));const code=fragment.get('code');
-        if(code){history.replaceState(null,'',location.pathname+location.search);const value=await api<Session>('/auth/local-exchange',{method:'POST',body:{code}});if(active)acceptSession(value);return;}
+        if(code){routerNavigate({pathname:routerLocation.pathname,search:routerLocation.search,hash:''},{replace:true});const value=await api<Session>('/auth/local-exchange',{method:'POST',body:{code}});if(active)acceptSession(value);return;}
         try{const value=await api<Session>('/auth/session');if(active)acceptSession(value);return;}catch(error){if(!(error instanceof ApiError)||error.status!==401)throw error;}
         const app=window.Telegram?.WebApp;
         if(app?.initData){
@@ -51,11 +58,10 @@ export default function App(){
       }catch(error){if(active)setAuthError(error);}finally{if(active)setBooting(false);}
     }
     void boot();
-    const pop=()=>{if(canNavigate()){navigationDepth.current=Math.max(0,navigationDepth.current-1);setRoute(location.pathname+location.search);}else history.pushState(null,'',currentRoute.current);};
-    const needAuth=()=>{clearSession();setCurrentSession(null);};
+    const needAuth=()=>forgetSession();
     const needReauth=()=>setReauth(true);
-    window.addEventListener('popstate',pop);window.addEventListener('publisher-auth-needed',needAuth);window.addEventListener('publisher-reauth-needed',needReauth);
-    return()=>{active=false;cleanup();window.removeEventListener('popstate',pop);window.removeEventListener('publisher-auth-needed',needAuth);window.removeEventListener('publisher-reauth-needed',needReauth);};
+    window.addEventListener('publisher-auth-needed',needAuth);window.addEventListener('publisher-reauth-needed',needReauth);
+    return()=>{active=false;cleanup();window.removeEventListener('publisher-auth-needed',needAuth);window.removeEventListener('publisher-reauth-needed',needReauth);};
   },[]);
   const channels=useQuery<Page<Channel>>(session?'/channels':null,10000);
   const settings=useQuery<{timezone?:string}>(session?'/settings':null);
@@ -71,7 +77,7 @@ export default function App(){
     if(route.split('?')[0]==='/publications')app.BackButton?.hide();else app.BackButton?.show();
     app.BackButton?.onClick(back);return()=>app.BackButton?.offClick(back);
   },[route,navigate]);
-  async function logout(){try{await api('/auth/logout',{method:'POST',body:{}});}finally{clearSession();setCurrentSession(null);}}
+  async function logout(){try{await api('/auth/logout',{method:'POST',body:{}});}finally{forgetSession();}}
   let page:ReactNode=null;const path=route.split('?')[0];const props={channels:channels.data?.items||[],channelID,timezone};
   if(path==='/desktop')page=<DesktopPage/>;
   else if(path==='/publications/new')page=<CreatePublication {...props}/>;

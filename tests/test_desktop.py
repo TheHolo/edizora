@@ -179,3 +179,63 @@ def test_restricted_windows_registry_does_not_break_application_status(monkeypat
     from app.desktop.routes import autostart_enabled
     monkeypatch.setattr(winreg, 'OpenKey', lambda *args: (_ for _ in ()).throw(PermissionError('restricted account')))
     assert autostart_enabled() is False
+
+
+def test_prototype_does_not_modify_windows_autostart(monkeypatch):
+    from app.application.errors import PlatformError
+    from app.desktop.routes import set_autostart
+    monkeypatch.setenv('PUBLISHER_TAURI_PROTOTYPE', '1')
+    with pytest.raises(PlatformError, match='тестовой сборке'):
+        set_autostart(True)
+
+
+def test_prototype_does_not_read_windows_autostart(monkeypatch):
+    from app.desktop.routes import autostart_enabled
+    monkeypatch.setenv('PUBLISHER_TAURI_PROTOTYPE', '1')
+    if __import__('os').name == 'nt':
+        import winreg
+        monkeypatch.setattr(winreg, 'OpenKey', lambda *args: (_ for _ in ()).throw(AssertionError('registry read')))
+    assert autostart_enabled() is False
+
+
+def test_tauri_autostart_uses_only_the_installed_sibling_shell(tmp_path):
+    from app.application.errors import PlatformError
+    from app.desktop.routes import _autostart_target
+    backend = tmp_path / 'backend/edizora-backend.exe'
+    backend.parent.mkdir()
+    backend.write_bytes(b'test backend')
+    shell = tmp_path / 'edizora.exe'
+    shell.write_bytes(b'test shell')
+    assert _autostart_target(backend, str(shell)) == shell.resolve()
+    assert _autostart_target(backend, None) == backend
+    other = tmp_path / 'other.exe'
+    other.write_bytes(b'not the installed shell')
+    with pytest.raises(PlatformError):
+        _autostart_target(backend, str(other))
+
+
+@pytest.mark.skipif(__import__('os').name != 'nt', reason='Windows registry adapter')
+def test_tauri_autostart_registers_shell_in_mock_registry(tmp_path, monkeypatch):
+    import subprocess
+    import sys
+    import winreg
+    from app.desktop.routes import set_autostart
+
+    backend = tmp_path / 'backend/edizora-backend.exe'
+    backend.parent.mkdir()
+    backend.write_bytes(b'test backend')
+    shell = tmp_path / 'edizora.exe'
+    shell.write_bytes(b'test shell')
+    class FakeKey:
+        def __enter__(self): return self
+        def __exit__(self, *args): return None
+    written = []
+    monkeypatch.setattr(sys, 'frozen', True, raising=False)
+    monkeypatch.setattr(sys, 'executable', str(backend))
+    monkeypatch.delenv('PUBLISHER_TAURI_PROTOTYPE', raising=False)
+    monkeypatch.setenv('PUBLISHER_TAURI_SHELL', str(shell))
+    monkeypatch.setattr(winreg, 'CreateKey', lambda *args: FakeKey())
+    monkeypatch.setattr(winreg, 'DeleteValue', lambda *args: (_ for _ in ()).throw(FileNotFoundError()))
+    monkeypatch.setattr(winreg, 'SetValueEx', lambda key, name, reserved, kind, value: written.append((name, kind, value)))
+    set_autostart(True)
+    assert written == [('Edizora', winreg.REG_SZ, subprocess.list2cmdline([str(shell.resolve()), '--background']))]

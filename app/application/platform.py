@@ -21,6 +21,7 @@ from app.services.caption_service import CaptionService, DEFAULT_TEMPLATE
 from app.services.news_render_service import NewsRenderService
 from app.utils.tags import normalize_tags, publication_tags
 from app.utils.text import telegram_html_length
+from app.application.errors import PlatformError
 
 
 def iso(value):
@@ -29,15 +30,6 @@ def iso(value):
 
 def channel_render_hash(channel):
     return hashlib.sha256(json.dumps({"template":channel.caption_template,"tags":channel.default_tags,"mode":channel.publish_mode},sort_keys=True,ensure_ascii=False).encode()).hexdigest()
-
-
-class PlatformError(Exception):
-    def __init__(self, status, code, message, *, current_version=None, current=None, field_errors=None):
-        super().__init__(message)
-        self.status = self.status_code = status
-        self.code, self.message = code, message
-        self.current_version, self.current = current_version, current
-        self.field_errors = field_errors
 
 
 class PlatformService:
@@ -207,6 +199,22 @@ class PlatformService:
             job.post_data=data;job.render_plan=None
             await session.flush()
             return await self._dto(session,job,detail=True)
+
+    async def upload_asset_stream(self, actor_id, source, *, filename):
+        """Desktop upload from an already bounded private runtime stream."""
+        from app.storage.assets import store_stream
+        async with self._write(actor_id) as session:
+            try:
+                stored = store_stream(self.data_root, source, max_bytes=47 * 1024 * 1024)
+            except ValueError as error:
+                raise PlatformError(422, 'invalid_media', 'Файл не является допустимым изображением') from error
+            asset = MediaAsset(**stored, source_kind='upload', filename=Path(str(filename or 'image')).name[:255])
+            session.add(asset)
+            await session.flush()
+            return {'id': asset.id, 'asset_id': asset.id, 'state': asset.state,
+                    'url': f'/api/v1/assets/{asset.id}/content',
+                    'thumbnail_url': f'/api/v1/assets/{asset.id}/thumbnail',
+                    'filename': asset.filename, 'mime_type': asset.mime_type}
 
     async def _actor(self, session, actor_id):
         user = await session.get(User, actor_id)

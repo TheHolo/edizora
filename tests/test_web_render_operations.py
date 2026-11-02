@@ -177,6 +177,110 @@ async def test_automatic_preparation_deduplicates_failures_and_retries_new_revis
     finally:await engine.dispose()
 
 
+async def test_automatic_preparation_visits_every_page_once(tmp_path):
+    from sqlalchemy import insert, select, text
+    from app.application.platform import channel_render_hash
+    from app.db.models import Job
+
+    engine, sessions, platform = await setup_platform(tmp_path)
+    pending = set(range(1, 131)) | {256, 257, 260}
+    try:
+        async with sessions() as session, session.begin():
+            fingerprint = channel_render_hash(await session.get(Channel, 1))
+            def plan(number):
+                if number == 128:
+                    return {'job_version': 1, 'channel_render_hash': 'stale'}
+                if number == 129:
+                    return {'job_version': 1, 'channel_render_hash': None, 'channel_version': 1}
+                if number in pending:
+                    return {}
+                return ({'job_version': 1, 'channel_render_hash': fingerprint} if number % 2
+                        else {'job_version': 1, 'channel_version': 1})
+            await session.execute(insert(Job), [{
+                'id': number, 'created_by_user_id': 1, 'target_channel_id': 1,
+                'version': 1, 'provider': 'fixture', 'content_kind': 'text',
+                'source_id': str(number), 'source_url': f'https://example.invalid/{number}',
+                'normalized_url': f'https://example.invalid/{number}', 'status': 'waiting_confirmation',
+                'post_data': {'title': 'Fixture', 'media_items': []}, 'user_tags': [], 'source_tags': [],
+                'render_plan': plan(number),
+            } for number in range(1, 261)])
+            # SQLite reads the first duplicate JSON key, Python the last. The
+            # optimized candidate filter must preserve the Python decision.
+            await session.execute(text('UPDATE jobs SET version=2, render_plan=:plan WHERE id=129'), {
+                'plan': '{"job_version":2,"channel_render_hash":"' + fingerprint
+                        + '","channel_render_hash":"stale"}',
+            })
+            await session.execute(text('UPDATE jobs SET version=2, render_plan=:plan WHERE id=131'), {
+                'plan': '{"job_version":2,"channel_render_hash":"stale","channel_render_hash":"'
+                        + fingerprint + '"}',
+            })
+        runner = OperationRunner(platform)
+        await runner._queue_preparations()
+        await runner._queue_preparations()
+        async with sessions() as session:
+            operations = (await session.scalars(select(Operation).where(Operation.kind == 'prepare'))).all()
+        assert {operation.job_id for operation in operations} == pending
+        assert len(operations) == len(pending)
+    finally:
+        await engine.dispose()
+
+
+async def test_automatic_preparation_with_many_channels_still_checks_fingerprints(tmp_path):
+    from sqlalchemy import insert, select
+    from app.application.platform import channel_render_hash
+    from app.db.models import Job
+
+    engine, sessions, platform = await setup_platform(tmp_path)
+    try:
+        async with sessions() as session, session.begin():
+            await session.execute(insert(Channel), [{
+                'id': number, 'alias': f'fixture-{number}', 'title': f'Fixture {number}',
+                'telegram_chat_id': str(-1000000-number), 'is_enabled': True,
+            } for number in range(2, 202)])
+        async with sessions() as session, session.begin():
+            fingerprint = channel_render_hash(await session.get(Channel, 201))
+            await session.execute(insert(Job), [{
+                'id': number, 'created_by_user_id': 1, 'target_channel_id': 201, 'version': 1,
+                'provider': 'fixture', 'content_kind': 'text', 'source_id': str(number),
+                'source_url': f'https://example.invalid/{number}',
+                'normalized_url': f'https://example.invalid/{number}', 'status': 'waiting_confirmation',
+                'post_data': {'title': 'Fixture', 'media_items': []}, 'user_tags': [], 'source_tags': [],
+                'render_plan': {'job_version': 1, 'channel_render_hash': fingerprint if number == 1 else 'stale'},
+            } for number in (1, 2)])
+        runner = OperationRunner(platform)
+        await runner._queue_preparations()
+        async with sessions() as session:
+            operations = (await session.scalars(select(Operation).where(Operation.kind == 'prepare'))).all()
+        assert [operation.job_id for operation in operations] == [2]
+    finally:
+        await engine.dispose()
+
+
+async def test_preparation_scan_repeats_after_a_database_change(tmp_path, monkeypatch):
+    import asyncio
+    from unittest.mock import AsyncMock
+
+    engine, sessions, platform = await setup_platform(tmp_path)
+    runner = OperationRunner(platform)
+    scan = AsyncMock(wraps=runner._queue_preparations)
+    monkeypatch.setattr(runner, '_queue_preparations', scan)
+    try:
+        await runner.start()
+        async with asyncio.timeout(10):
+            while scan.await_count < 1:
+                await asyncio.sleep(.05)
+            await asyncio.sleep(2.2)
+            assert scan.await_count == 1
+            async with sessions() as session, session.begin():
+                channel = await session.get(Channel, 1)
+                channel.title = 'Updated fixture channel'
+            while scan.await_count < 2:
+                await asyncio.sleep(.05)
+    finally:
+        await runner.stop()
+        await engine.dispose()
+
+
 async def test_import_automatically_downloads_and_exposes_retry_after_source_failure(tmp_path):
     import asyncio
     from types import SimpleNamespace
